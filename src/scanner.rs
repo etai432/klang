@@ -41,7 +41,6 @@ impl<'a> Scanner<'a> {
                 '{' => self.make_token(TokenType::LeftBrace, ch.to_string(), self.line, None),
                 '}' => self.make_token(TokenType::RightBrace, ch.to_string(), self.line, None),
                 ',' => self.make_token(TokenType::Comma, ch.to_string(), self.line, None),
-                '.' => self.make_token(TokenType::Dot, ch.to_string(), self.line, None),
                 '-' => self.make_token(TokenType::Minus, ch.to_string(), self.line, None),
                 '+' => self.make_token(TokenType::Plus, ch.to_string(), self.line, None),
                 ';' => self.make_token(TokenType::Semicolon, ch.to_string(), self.line, None),
