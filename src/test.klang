@@ -1,3 +1,1 @@
-//this is a comment
-let x: int = 3;
-print("{x}");
+123
