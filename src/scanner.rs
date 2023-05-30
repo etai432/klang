@@ -2,7 +2,6 @@
 use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
-use std::sync::Exclusive;
 
 #[derive(Debug, Clone)]
 pub struct Scanner<'a> {
@@ -111,7 +110,7 @@ impl<'a> Scanner<'a> {
                 '\n' => self.line += 1,
                 _ => {
                     if ch.is_ascii_digit() {
-                        self.number();
+                        self.number(ch);
                     } else if ch.is_ascii_alphabetic() {
                         self.identifier();
                     } else {
@@ -136,37 +135,34 @@ impl<'a> Scanner<'a> {
     fn identifier(&mut self) {
         //check for keyword first
     }
-    fn number(&mut self) {
-        let mut number = String::new();
+    fn number(&mut self, ch: char) {
+        let mut number = String::from(ch);
         while self.chars.peek().unwrap_or(&'\0').is_ascii_digit() {
             number.push(self.chars.next().unwrap());
         }
-
         if self.chars.peek().unwrap_or(&'\0') == &'.' {
             number.push(self.chars.next().unwrap());
             while self.chars.peek().unwrap_or(&'\0').is_ascii_digit() {
                 number.push(self.chars.next().unwrap());
             }
-        }
-
-        if number.ends_with('.') {
-            panic!("float cannot end with a '.'")
-        } else if number.contains('.') {
-            let number: f64 = match number.parse::<f64>() {
-                Ok(e) => e,
-                Err(_) => panic!("failed to parse float, fuck you"),
-            };
+            if number.ends_with('.') {
+                panic!("float cannot end with a '.'")
+            }
+            self.make_token(TokenType::Int, "".to_string(), self.line,  match number.parse::<f64>() {
+                Ok(e) => Some(Value::Float(e)),
+                Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
+            })
         } else {
-            let number: i64 = match number.parse::<i64>() {
-                Ok(e) => e,
-                Err(_) => panic!("failed to parse integer, fuck you"),
-            };
+            self.make_token(TokenType::Int, "".to_string(), self.line,  match number.parse::<i64>() {
+                Ok(e) => Some(Value::Int(e)),
+                Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
+            })
         }
     }
     fn string(&mut self) {}
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenType {
     LeftParen,
     RightParen,
@@ -205,7 +201,6 @@ pub enum TokenType {
     In,
     While,
     Print,
-    Value(Value),
     Eof,
 }
 
