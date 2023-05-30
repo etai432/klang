@@ -48,28 +48,52 @@ impl<'a> Scanner<'a> {
                 }
                 '!' => {
                     if self.is_next('=') {
-                        self.make_token(TokenType::BangEqual, ch.to_string(), self.line, None)
+                        let next = self.chars.next().unwrap();
+                        self.make_token(
+                            TokenType::BangEqual,
+                            String::from(ch) + &String::from(next),
+                            self.line,
+                            None,
+                        );
                     } else {
                         self.make_token(TokenType::Bang, ch.to_string(), self.line, None)
                     }
                 }
                 '=' => {
                     if self.is_next('=') {
-                        self.make_token(TokenType::EqualEqual, ch.to_string(), self.line, None)
+                        let next = self.chars.next().unwrap();
+                        self.make_token(
+                            TokenType::EqualEqual,
+                            String::from(ch) + &String::from(next),
+                            self.line,
+                            None,
+                        );
                     } else {
                         self.make_token(TokenType::Equal, ch.to_string(), self.line, None)
                     }
                 }
                 '>' => {
                     if self.is_next('=') {
-                        self.make_token(TokenType::GreaterEqual, ch.to_string(), self.line, None)
+                        let next = self.chars.next().unwrap();
+                        self.make_token(
+                            TokenType::GreaterEqual,
+                            String::from(ch) + &String::from(next),
+                            self.line,
+                            None,
+                        );
                     } else {
                         self.make_token(TokenType::Greater, ch.to_string(), self.line, None)
                     }
                 }
                 '<' => {
                     if self.is_next('=') {
-                        self.make_token(TokenType::LessEqual, ch.to_string(), self.line, None)
+                        let next = self.chars.next().unwrap();
+                        self.make_token(
+                            TokenType::LessEqual,
+                            String::from(ch) + &String::from(next),
+                            self.line,
+                            None,
+                        );
                     } else {
                         self.make_token(TokenType::Less, ch.to_string(), self.line, None)
                     }
@@ -131,17 +155,6 @@ impl<'a> Scanner<'a> {
             line,
         })
     }
-
-    fn consume_until(&mut self, until: char, ch: char) -> String {
-        let mut t = String::from(ch);
-
-        while self.chars.peek().unwrap() != &until {
-            t.push(self.chars.next().unwrap())
-        }
-
-        t
-    }
-
     fn is_next(&mut self, ch: char) -> bool {
         self.chars.peek() == Some(&ch)
     }
