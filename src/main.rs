@@ -20,6 +20,6 @@ fn run_file(path: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source);
     scanner.scan_tokens();
-    println!("{:#?}", scanner.tokens);
+    println!("{:?}", scanner.tokens);
     println!("{}", source);
 }

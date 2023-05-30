@@ -9,29 +9,15 @@ pub struct Scanner<'a> {
     pub chars: Peekable<Chars<'a>>,
     pub line: usize,
     pub tokens: Vec<Token>,
-    keywords: HashMap<&'static str, TokenType>,
 }
 
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Scanner<'a> {
-        let mut keywords = HashMap::new();
-        keywords.insert("let", TokenType::Let);
-        keywords.insert("in", TokenType::In);
-        keywords.insert("else", TokenType::Else);
-        keywords.insert("for", TokenType::For);
-        keywords.insert("if", TokenType::If);
-        keywords.insert("print", TokenType::Print);
-        keywords.insert("while", TokenType::While);
-        keywords.insert("int", TokenType::Int);
-        keywords.insert("float", TokenType::Float);
-        keywords.insert("string", TokenType::String);
-        keywords.insert("bool", TokenType::Bool);
         Scanner {
             source,
             chars: source.chars().peekable(),
             line: 1,
             tokens: Vec::new(),
-            keywords,
         }
     }
 
@@ -135,28 +121,35 @@ impl<'a> Scanner<'a> {
     }
 
     fn identifier(&mut self, ch: char) {
-        todo!("fix function or gay");
+        let mut word = String::from(ch);
         while self.chars.peek().unwrap_or(&'\0').is_ascii_alphabetic() {
-            let mut word = String::new();
-            word.push(ch);
-            if self.chars.peek() != None {
-                while !self.chars.peek().unwrap().is_whitespace() {
-                    word.push(self.chars.next().unwrap())
-                }
-            } else {
-                println!("NOne")
-            }
-            println!("{word}")
-            /* if self.keywords.contains_key(word.as_str()) {S
-                match word.as_str() {
-                    "let" => {
-                        todo!("fix error")
-                    }
-                    _ => {
-                        panic!("bitch")
-                    }
-                }
-            } */
+            word.push(self.chars.next().unwrap());
+        }
+        match word.as_str() {
+            "let" => self.make_token(TokenType::Let, "".to_string(), self.line, None),
+            "in" => self.make_token(TokenType::In, "".to_string(), self.line, None),
+            "else" => self.make_token(TokenType::Else, "".to_string(), self.line, None),
+            "for" => self.make_token(TokenType::For, "".to_string(), self.line, None),
+            "if" => self.make_token(TokenType::If, "".to_string(), self.line, None),
+            "print" => self.make_token(TokenType::Print, "".to_string(), self.line, None),
+            "while" => self.make_token(TokenType::While, "".to_string(), self.line, None),
+            "int" => self.make_token(TokenType::Int, "".to_string(), self.line, None),
+            "float" => self.make_token(TokenType::Float, "".to_string(), self.line, None),
+            "string" => self.make_token(TokenType::String, "".to_string(), self.line, None),
+            "bool" => self.make_token(TokenType::Bool, "".to_string(), self.line, None),
+            "true" => self.make_token(
+                TokenType::Bool,
+                "true".to_string(),
+                self.line,
+                Some(Value::Bool(true)),
+            ),
+            "false" => self.make_token(
+                TokenType::Bool,
+                "false".to_string(),
+                self.line,
+                Some(Value::Bool(false)),
+            ),
+            _ => self.make_token(TokenType::Identifier, word, self.line, None),
         }
     }
     fn number(&mut self, ch: char) {
@@ -172,7 +165,7 @@ impl<'a> Scanner<'a> {
             if number.ends_with('.') {
                 panic!("float cannot end with a '.'")
             }
-            self.make_token(TokenType::Int, "".to_string(), self.line,  match number.parse::<f64>() {
+            self.make_token(TokenType::Float, "".to_string(), self.line,  match number.parse::<f64>() {
                 Ok(e) => Some(Value::Float(e)),
                 Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
             })
@@ -186,12 +179,15 @@ impl<'a> Scanner<'a> {
     fn string(&mut self) {
         let mut string = String::new();
         while self.chars.peek().unwrap_or(&'\0') != &'"' {
-            if self.chars.peek().unwrap() == &'\n' {
+            if self.chars.peek().unwrap_or(&'\0') == &'\n' {
                 self.line += 1
+            }
+            if self.chars.peek().is_none() {
+                panic!("Unterminated string");
             }
             string.push(self.chars.next().unwrap());
         }
-
+        self.chars.next(); //consume the 2nd "
         self.make_token(TokenType::String, format!("\"{string}\""), self.line, None)
     }
 }
@@ -219,9 +215,9 @@ pub enum TokenType {
     GreaterEqual,
     Less,
     LessEqual,
-
     And,
     Or,
+
     Let,
     Identifier,
     String,
