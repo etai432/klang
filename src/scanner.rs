@@ -92,7 +92,14 @@ impl<'a> Scanner<'a> {
                     if self.is_next('&') {
                         self.make_token(TokenType::And, ch.to_string(), self.line, None)
                     } else {
-                        panic!("missing second & u fucking FUCKER")
+                        panic!("missing second & u fucking FUCKER") //XD
+                    }
+                }
+                '|' => {
+                    if self.is_next('|') {
+                        self.make_token(TokenType::Or, ch.to_string(), self.line, None)
+                    } else {
+                        panic!("missing second | u fucking FUCKER") //XD
                     }
                 }
 
