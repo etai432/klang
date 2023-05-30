@@ -11,8 +11,10 @@ pub enum KlangError {
 impl KlangError {
     pub fn error(et: KlangError, msg: &str, line: usize, filename: &str) {
         eprintln!(
-            "{}",
-            format!("[{et:?}] {filename} at line {line}: {msg}").red()
+            "{} {} {}",
+            format!("[{et:?}]").red(),
+            format!("{filename}").blue().bold(),
+            format!("at line {line}: {msg}").red()
         );
         std::process::exit(0);
     }
