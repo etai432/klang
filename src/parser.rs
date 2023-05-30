@@ -36,16 +36,32 @@ impl Parser {
     }
 
     fn match_tokens(&mut self, types: &[TokenType]) -> bool {
-        //checks if the next token is one of the types
+        // checks if next token is in types slice thing
+
+        for &i in types {
+            if self.check(i) {
+                self.advance();
+                return true;
+            }
+        }
+        false
     }
+
     fn check(&self, t_type: TokenType) -> bool {
-        //check if the next token is t_type
+        if self.is_at_end() {
+            return false;
+        }
+        self.peek().tt == t_type
     }
+
     fn advance(&mut self) -> Token {
-        //advances by 1
+        if !self.is_at_end() {
+            self.current += 1;
+        }
+        self.previous()
     }
     fn is_at_end(&self) -> bool {
-        self.peek().t_type == TokenType::Eof
+        self.peek().tt == TokenType::Eof
     }
     fn peek(&self) -> Token {
         self.tokens[self.current].clone()

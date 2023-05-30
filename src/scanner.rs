@@ -302,7 +302,7 @@ impl<'a> Scanner<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub enum TokenType {
     LeftParen,
     RightParen,
