@@ -27,5 +27,5 @@ fn run_file(path: &str, relfilename: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
     scanner.scan_tokens();
-    println!("scanning complete");
+    println!("{:?}", scanner.tokens);
 }
