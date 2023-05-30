@@ -14,6 +14,6 @@ impl KlangError {
             "{}",
             format!("[{et:?}] {filename} at line {line}: {msg}").red()
         );
-        std::process::exit(-1);
+        std::process::exit(0);
     }
 }

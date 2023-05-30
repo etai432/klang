@@ -2,7 +2,6 @@ use std::{env, fs};
 mod error;
 mod scanner;
 use error::KlangError;
-use scanner::TokenType;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

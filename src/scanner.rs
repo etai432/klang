@@ -96,7 +96,12 @@ impl<'a> Scanner<'a> {
                     if self.is_next('|') {
                         self.make_token(TokenType::Or, ch.to_string(), self.line, None)
                     } else {
-                        panic!("missing second | u fucking FUCKER") //XD
+                        error::KlangError::error(
+                            KlangError::ScannerError,
+                            "missing a second | you stupid gay",
+                            self.line,
+                            self.filename,
+                        ) //XD
                     }
                 }
                 '"' => self.string(),
