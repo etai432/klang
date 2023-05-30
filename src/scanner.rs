@@ -1,6 +1,7 @@
 #![allow(unused)]
 use crate::{error, KlangError};
 use std::collections::HashMap;
+use std::fmt;
 use std::iter::Peekable;
 use std::str::Chars;
 
@@ -258,6 +259,49 @@ pub enum TokenType {
     Eof,
 }
 
+impl fmt::Display for TokenType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TokenType::LeftParen => write!(f, "LeftParen"),
+            TokenType::RightParen => write!(f, "RightParen"),
+            TokenType::LeftBrace => write!(f, "LeftBrace"),
+            TokenType::RightBrace => write!(f, "RightBrace"),
+            TokenType::Comma => write!(f, "Comma"),
+            TokenType::Dot => write!(f, "Dot"),
+            TokenType::Minus => write!(f, "Minus"),
+            TokenType::Plus => write!(f, "Plus"),
+            TokenType::Slash => write!(f, "Slash"),
+            TokenType::Star => write!(f, "Star"),
+            TokenType::Semicolon => write!(f, "Semicolon"),
+            TokenType::Colon => write!(f, "Colon"),
+            TokenType::Bang => write!(f, "Bang"),
+            TokenType::BangEqual => write!(f, "BangEqual"),
+            TokenType::Equal => write!(f, "Equal"),
+            TokenType::EqualEqual => write!(f, "EqualEqual"),
+            TokenType::Greater => write!(f, "Greater"),
+            TokenType::GreaterEqual => write!(f, "GreaterEqual"),
+            TokenType::Less => write!(f, "Less"),
+            TokenType::LessEqual => write!(f, "LessEqual"),
+            TokenType::And => write!(f, "And"),
+            TokenType::Or => write!(f, "Or"),
+            TokenType::Let => write!(f, "Let"),
+            TokenType::Identifier => write!(f, "Identifier"),
+            TokenType::String => write!(f, "String"),
+            TokenType::Int => write!(f, "Int"),
+            TokenType::Float => write!(f, "Float"),
+            TokenType::Bool => write!(f, "Bool"),
+            TokenType::If => write!(f, "If"),
+            TokenType::Else => write!(f, "Else"),
+            TokenType::For => write!(f, "For"),
+            TokenType::Range => write!(f, "Range"),
+            TokenType::In => write!(f, "In"),
+            TokenType::While => write!(f, "While"),
+            TokenType::Print => write!(f, "Print"),
+            TokenType::Eof => write!(f, "Eof"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     String(String),
@@ -266,10 +310,31 @@ pub enum Value {
     Bool(bool),
 }
 
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::String(s) => write!(f, "\"{}\"", s),
+            Value::Int(i) => write!(f, "{}", i),
+            Value::Float(fl) => write!(f, "{}", fl),
+            Value::Bool(b) => write!(f, "{}", b),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Token {
     pub tt: TokenType,
     pub lexeme: String,
     pub literal: Option<Value>,
     pub line: usize,
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Token: {:?}, Lexeme: {}, Literal: {:?}, Line: {}",
+            self.tt, self.lexeme, self.literal, self.line
+        )
+    }
 }
