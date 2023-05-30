@@ -88,6 +88,13 @@ impl<'a> Scanner<'a> {
                         self.make_token(TokenType::Dot, ch.to_string(), self.line, None)
                     }
                 }
+                '&' => {
+                    if self.is_next('&') {
+                        self.make_token(TokenType::And, ch.to_string(), self.line, None)
+                    } else {
+                        panic!("missing second & u fucking FUCKER")
+                    }
+                }
 
                 _ => {
                     todo!("multi character tokens go here")
