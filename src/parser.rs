@@ -1,4 +1,5 @@
 use crate::expr::Expr;
+use crate::Scanner::Token;
 pub struct Parser {
     pub tokens: Vec<Token>,
     current: usize,
@@ -7,7 +8,20 @@ impl Parser {
     pub fn new(tokens: Vec<Token>) -> Parser {
         Parser { tokens, current: 0 }
     }
-    fn equality() -> Expr {}
+    fn equality(&mut self) -> Expr {
+        let left: Box<Expr> = self.comparison();
+        if self.previous() != "==" || self.previous() != "!=" {
+            return left;
+        } else {
+            let operator: Token = self.previous();
+            let right: Box<Expr> = self.comparison();
+            Expr::Binary {
+                left,
+                operator,
+                right,
+            }
+        }
+    }
     fn comparison() -> Expr {}
     fn term() -> Expr {}
     fn factor() -> Expr {}
