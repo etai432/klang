@@ -1,7 +1,17 @@
-13
-13
-52
-1.414
-true
-L
-""
+//this is a comment- obviously. the language will start running from the first line.
+//klang is staticly typed and is interpreted using rust.
+//In Klang, although indentations are not mandatory, it is strongly recommended to adhere to formal indentation rules to maintain clean and readable code.
+//klang has 4 simple types: bool, float, int, string. chars will just be stored inside strings
+// var declaration:
+//let identifier: type = value(?);
+let x: int = 3;
+// control flow:
+//klang uses <, >, <=, >=, ==, &&, || for control flow. and will use the basic +, -, *, / for arithmatic operations.
+//if bool && bool || bool {
+//    expr;
+//} else if bool {
+//    expr;
+//}
+if x > 1 {
+    x = 2;
+}
