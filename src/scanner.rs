@@ -333,7 +333,7 @@ impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Token: {:?}, Lexeme: {}, Literal: {:?}, Line: {}",
+            "Token: {}, Lexeme: {}, Literal: {:?}, Line: {}",
             self.tt, self.lexeme, self.literal, self.line
         )
     }
