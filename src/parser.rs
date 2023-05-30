@@ -12,7 +12,14 @@ impl Parser {
     fn term() -> Expr {}
     fn factor() -> Expr {}
     fn unary() -> Expr {}
-    fn primary() -> Expr {}
+    fn primary() -> Expr {
+        //handle bool (true, false)
+        //handle string
+        //handle int
+        //handle float
+        //return Literal
+        //also handle for grouping and variable
+    }
 
     fn match_tokens(&mut self, types: &[TokenType]) -> bool {
         //checks if the next token is one of the types
@@ -34,5 +41,8 @@ impl Parser {
     }
     fn error(&self) {
         //calls parser error
+    }
+    fn consume(&mut self, t_type: TokenType, msg: &str) -> Option<Token> {
+        //checking if the next token is of type t_type, and returning it, or erroring.
     }
 }
