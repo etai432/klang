@@ -12,6 +12,7 @@ pub struct Scanner<'a> {
     pub line: usize,
     pub tokens: Vec<Token>,
     filename: &'a str,
+    had_error: bool,
 }
 
 impl<'a> Scanner<'a> {
@@ -22,10 +23,11 @@ impl<'a> Scanner<'a> {
             line: 1,
             tokens: Vec::new(),
             filename,
+            had_error: false,
         }
     }
 
-    pub fn scan_tokens(&mut self) {
+    pub fn scan_tokens(&mut self) -> Vec<Token> {
         while let Some(ch) = self.chars.next() {
             match ch {
                 '(' => self.make_token(TokenType::LeftParen, ch.to_string(), self.line, None),
@@ -114,7 +116,8 @@ impl<'a> Scanner<'a> {
                             "missing a second & you fat fuck",
                             self.line,
                             self.filename,
-                        )
+                        );
+                        self.had_error = true;
                     }
                 }
                 '|' => {
@@ -126,7 +129,8 @@ impl<'a> Scanner<'a> {
                             "missing a second | you stupid gay",
                             self.line,
                             self.filename,
-                        ) //XD
+                        );
+                        self.had_error = true;
                     }
                 }
                 '"' => self.string(),
@@ -140,12 +144,23 @@ impl<'a> Scanner<'a> {
                     } else if ch.is_ascii_alphabetic() {
                         self.identifier(ch);
                     } else {
-                        panic!("unexpected character");
+                        error::KlangError::error(
+                            KlangError::ScannerError,
+                            "unexpected character",
+                            self.line,
+                            self.filename,
+                        );
+                        self.had_error = true;
                     }
                 }
             }
         }
         self.make_token(TokenType::Eof, String::from(""), self.line, None);
+        if self.had_error {
+            std::process::exit(0);
+        } else {
+            std::mem::take(&mut self.tokens)
+        }
     }
     fn make_token(&mut self, tt: TokenType, text: String, line: usize, value: Option<Value>) {
         self.tokens.push(Token {
@@ -176,6 +191,8 @@ impl<'a> Scanner<'a> {
             "float" => self.make_token(TokenType::Float, "".to_string(), self.line, None),
             "string" => self.make_token(TokenType::String, "".to_string(), self.line, None),
             "bool" => self.make_token(TokenType::Bool, "".to_string(), self.line, None),
+            "fn" => self.make_token(TokenType::Fn, "".to_string(), self.line, None),
+            "return" => self.make_token(TokenType::Return, "".to_string(), self.line, None),
             "true" => self.make_token(
                 TokenType::Bool,
                 "true".to_string(),
@@ -200,10 +217,20 @@ impl<'a> Scanner<'a> {
             number.push(self.chars.next().unwrap());
             if self.chars.peek().unwrap_or(&'\0') == &'.' {
                 number.pop();
-                self.make_token(TokenType::Int, "".to_string(), self.line,  match number.parse::<i64>() {
+                let value = match number.parse::<i64>() {
                     Ok(e) => Some(Value::Int(e)),
-                    Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
-                });
+                    Err(_) => {
+                        error::KlangError::error(
+                            KlangError::ScannerError,
+                            "failed to parse integer",
+                            self.line,
+                            self.filename,
+                        );
+                        self.had_error = true;
+                        Some(Value::Int(0))
+                    }
+                };
+                self.make_token(TokenType::Int, "".to_string(), self.line, value);
                 self.make_token(TokenType::Range, "..".to_string(), self.line, None);
                 self.chars.next(); //consume 2nd dot
             } else {
@@ -211,18 +238,44 @@ impl<'a> Scanner<'a> {
                     number.push(self.chars.next().unwrap());
                 }
                 if number.ends_with('.') {
-                    panic!("float cannot end with a '.'")
+                    error::KlangError::error(
+                        KlangError::ScannerError,
+                        "float cant end with a dot",
+                        self.line,
+                        self.filename,
+                    );
+                    self.had_error = true;
                 }
-                self.make_token(TokenType::Float, "".to_string(), self.line,  match number.parse::<f64>() {
+                let value = match number.parse::<f64>() {
                     Ok(e) => Some(Value::Float(e)),
-                    Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
-                })
+                    Err(_) => {
+                        error::KlangError::error(
+                            KlangError::ScannerError,
+                            "failed to parse float",
+                            self.line,
+                            self.filename,
+                        );
+                        self.had_error = true;
+                        Some(Value::Float(0.0))
+                    }
+                };
+                self.make_token(TokenType::Float, "".to_string(), self.line, value)
             }
         } else {
-            self.make_token(TokenType::Int, "".to_string(), self.line,  match number.parse::<i64>() {
+            let value = match number.parse::<i64>() {
                 Ok(e) => Some(Value::Int(e)),
-                Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
-            })
+                Err(_) => {
+                    error::KlangError::error(
+                        KlangError::ScannerError,
+                        "failed to parse integer",
+                        self.line,
+                        self.filename,
+                    );
+                    self.had_error = true;
+                    Some(Value::Int(0))
+                }
+            };
+            self.make_token(TokenType::Int, "".to_string(), self.line, value)
         }
     }
     fn string(&mut self) {
@@ -232,9 +285,17 @@ impl<'a> Scanner<'a> {
                 self.line += 1
             }
             if self.chars.peek().is_none() {
-                panic!("Unterminated string");
+                error::KlangError::error(
+                    KlangError::ScannerError,
+                    "unterminated string",
+                    self.line,
+                    self.filename,
+                );
+                self.had_error = true;
+                break;
+            } else {
+                string.push(self.chars.next().unwrap());
             }
-            string.push(self.chars.next().unwrap());
         }
         self.chars.next(); //consume the 2nd "
         self.make_token(TokenType::String, format!("\"{string}\""), self.line, None)
@@ -280,6 +341,8 @@ pub enum TokenType {
     In,
     While,
     Print,
+    Fn,
+    Return,
     Eof,
 }
 
@@ -321,6 +384,8 @@ impl fmt::Display for TokenType {
             TokenType::In => write!(f, "In"),
             TokenType::While => write!(f, "While"),
             TokenType::Print => write!(f, "Print"),
+            TokenType::Fn => write!(f, "function"),
+            TokenType::Return => write!(f, "return"),
             TokenType::Eof => write!(f, "Eof"),
         }
     }

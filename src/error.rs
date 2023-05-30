@@ -16,6 +16,5 @@ impl KlangError {
             filename.to_string().blue().bold(),
             format!("at line {line}: {msg}").red()
         );
-        std::process::exit(0);
     }
 }

@@ -1,6 +1,32 @@
+statements are the building blocks of a program. example for a statement is If statement
+program => declaration* EOF ;
+declaration => varDecl | fnDecl | statement ;
+fnDecl => fn function ;
+function => identifier "(" parameters? ")" block ;
+parameters => identifier ("," identifier)* ;
+varDecl => let Identifier ":" type ("=" expression)? ";" ;
+statement => exprStmt | printStmt | block | ifStmt | whileStmt | forStmt | returnStmt ;
+returnStmt => "return" expression ";" ;
+forStmt => "for" identifier "in" Iterable block ;
+whileStmt => "while" "(" expression ")" block ;
+ifStmt => "if" "(" expression ")" block ("else" block)? ;
+block => "{" declaration "}" ;
+printStmt => print("string {identifier}")
+exprStmt => expression ";" ;
+
 expressions are the simplest blocks of codes, those are the lines you see that end with ;
-expression => literal | unary | binary | grouping;
-literal => Value;
-grouping => "(" expression ")";
-unary => ("-" | "!") expression;
-binary => expression operator expression;
+expression => range;
+range => Int..Int | Int..Int..Int | assignment;
+assignment => IDENTIFIER "=" assignment | logic_or ;
+logic_or => logic_and ( "or" logic_and )* ;
+logic_and => equality ( "and" equality )* ;
+equality => comparison ( ( "!=" | "==" ) comparison )* ;
+comparison => term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+term => factor ( ( "-" | "+" ) factor )* ;
+factor => unary ( ( "/" | "*" ) unary )* ;
+unary => ( "!" | "-" ) unary | call ;
+call => primary ( "(" arguments? ")" )* ;
+arguments => expression ( "," expression )* ;
+primary => Value | "(" expression ")" | identifier ;
+type => INT | FLOAT | BOOL | STRING
+Iterable => Int..Int | Int..Int..Int | iterable type (yet to be made)
