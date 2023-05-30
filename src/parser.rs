@@ -32,4 +32,7 @@ impl Parser {
     fn previous(&self) -> Token {
         self.tokens[self.current - 1].clone()
     }
+    fn error(&self) {
+        //calls parser error
+    }
 }
