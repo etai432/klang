@@ -1,5 +1,8 @@
 use std::{env, fs};
+mod error;
 mod scanner;
+use error::KlangError;
+use scanner::TokenType;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -18,7 +21,7 @@ fn main() {
 
 fn run_file(path: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
-    let mut scanner = scanner::Scanner::new(&source);
+    let mut scanner = scanner::Scanner::new(&source, path);
     scanner.scan_tokens();
     println!("{:?}", scanner.tokens);
     println!("{}", source);

@@ -1,4 +1,5 @@
 #![allow(unused)]
+use crate::{error, KlangError};
 use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
@@ -9,15 +10,17 @@ pub struct Scanner<'a> {
     pub chars: Peekable<Chars<'a>>,
     pub line: usize,
     pub tokens: Vec<Token>,
+    filename: &'a str,
 }
 
 impl<'a> Scanner<'a> {
-    pub fn new(source: &'a str) -> Scanner<'a> {
+    pub fn new(source: &'a str, filename: &'a str) -> Scanner<'a> {
         Scanner {
             source,
             chars: source.chars().peekable(),
             line: 1,
             tokens: Vec::new(),
+            filename,
         }
     }
 
@@ -80,7 +83,12 @@ impl<'a> Scanner<'a> {
                     if self.is_next('&') {
                         self.make_token(TokenType::And, ch.to_string(), self.line, None)
                     } else {
-                        panic!("missing second & u fucking FUCKER") //XD
+                        error::KlangError::error(
+                            KlangError::ScannerError,
+                            "missing a second & you fat fuck",
+                            self.line,
+                            self.filename,
+                        )
                     }
                 }
                 '|' => {
