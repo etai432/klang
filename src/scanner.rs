@@ -102,9 +102,19 @@ impl<'a> Scanner<'a> {
                         panic!("missing second | u fucking FUCKER") //XD
                     }
                 }
-
+                '"' => self.string(),
+                ' ' => (),
+                '\r' => (),
+                '\t' => (),
+                '\n' => self.line += 1,
                 _ => {
-                    todo!("multi character tokens go here")
+                    if ch.is_ascii_digit() {
+                        self.number();
+                    } else if ch.is_ascii_alphabetic() {
+                        self.identifier();
+                    } else {
+                        panic!("unexpected character");
+                    }
                 }
             }
         }
@@ -121,6 +131,11 @@ impl<'a> Scanner<'a> {
     fn is_next(&mut self, ch: char) -> bool {
         self.chars.peek() == Some(&ch)
     }
+    fn identifier(&mut self) {
+        //check for keyword first
+    }
+    fn number(&mut self) {}
+    fn string(&mut self) {}
 }
 
 #[derive(Debug, Clone, PartialEq)]
