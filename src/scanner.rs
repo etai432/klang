@@ -163,7 +163,17 @@ impl<'a> Scanner<'a> {
             };
         }
     }
-    fn string(&mut self) {}
+    fn string(&mut self) {
+        let mut string = String::new();
+        while self.chars.peek().unwrap_or(&'\0') != &'"' {
+            if self.chars.peek().unwrap() == &'\n' {
+                self.line += 1
+            }
+            string.push(self.chars.next().unwrap());
+        }
+
+        self.make_token(TokenType::String, format!("\"{string}\""), self.line, None)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
