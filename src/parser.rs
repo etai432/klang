@@ -1,5 +1,5 @@
 use crate::expr::Expr;
-use crate::Scanner::Token;
+use crate::scanner::{Token, TokenType};
 pub struct Parser {
     pub tokens: Vec<Token>,
     current: usize,
@@ -9,12 +9,12 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
     fn equality(&mut self) -> Expr {
-        let left: Box<Expr> = self.comparison();
+        let left: Expr = self.comparison();
         if self.previous() != "==" || self.previous() != "!=" {
             return left;
         } else {
             let operator: Token = self.previous();
-            let right: Box<Expr> = self.comparison();
+            let right: Expr = self.comparison();
             Expr::Binary {
                 left,
                 operator,
@@ -22,11 +22,11 @@ impl Parser {
             }
         }
     }
-    fn comparison() -> Expr {}
-    fn term() -> Expr {}
-    fn factor() -> Expr {}
-    fn unary() -> Expr {}
-    fn primary() -> Expr {
+    fn comparison(&mut self) -> Expr {}
+    fn term(&mut self) -> Expr {}
+    fn factor(&mut self) -> Expr {}
+    fn unary(&mut self) -> Expr {}
+    fn primary(&mut self) -> Expr {
         //handle bool (true, false)
         //handle string
         //handle int

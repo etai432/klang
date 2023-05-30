@@ -1,6 +1,7 @@
 use std::{env, fs};
 mod error;
 mod expr;
+mod parser;
 mod scanner;
 use error::KlangError;
 use std::path::Path;
