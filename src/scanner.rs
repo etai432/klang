@@ -108,6 +108,7 @@ pub enum TokenType {
     In,
     While,
     Print,
+    Value(Value),
     Eof,
 }
 
