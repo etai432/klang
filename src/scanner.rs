@@ -1,6 +1,8 @@
+#![allow(unused)]
 use std::collections::HashMap;
 use std::iter::Peekable;
 use std::str::Chars;
+use std::sync::Exclusive;
 
 #[derive(Debug, Clone)]
 pub struct Scanner<'a> {
@@ -134,7 +136,33 @@ impl<'a> Scanner<'a> {
     fn identifier(&mut self) {
         //check for keyword first
     }
-    fn number(&mut self) {}
+    fn number(&mut self) {
+        let mut number = String::new();
+        while self.chars.peek().unwrap_or(&'\0').is_ascii_digit() {
+            number.push(self.chars.next().unwrap());
+        }
+
+        if self.chars.peek().unwrap_or(&'\0') == &'.' {
+            number.push(self.chars.next().unwrap());
+            while self.chars.peek().unwrap_or(&'\0').is_ascii_digit() {
+                number.push(self.chars.next().unwrap());
+            }
+        }
+
+        if number.ends_with('.') {
+            panic!("float cannot end with a '.'")
+        } else if number.contains('.') {
+            let number: f64 = match number.parse::<f64>() {
+                Ok(e) => e,
+                Err(_) => panic!("failed to parse float, fuck you"),
+            };
+        } else {
+            let number: i64 = match number.parse::<i64>() {
+                Ok(e) => e,
+                Err(_) => panic!("failed to parse integer, fuck you"),
+            };
+        }
+    }
     fn string(&mut self) {}
 }
 
