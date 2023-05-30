@@ -46,6 +46,7 @@ impl<'a> Scanner<'a> {
                 '+' => self.make_token(TokenType::Plus, ch.to_string(), self.line, None),
                 ';' => self.make_token(TokenType::Semicolon, ch.to_string(), self.line, None),
                 '*' => self.make_token(TokenType::Star, ch.to_string(), self.line, None),
+                ':' => self.make_token(TokenType::Colon, ch.to_string(), self.line, None),
                 '/' => {
                     if self.is_next('/') {
                         while self.chars.next() != Some('\n') || self.chars.peek().is_none() {}
