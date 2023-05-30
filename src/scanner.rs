@@ -53,7 +53,45 @@ impl<'a> Scanner<'a> {
                         self.make_token(TokenType::Slash, ch.to_string(), self.line, None);
                     }
                 }
-                _ => todo!("multi character tokens go here"),
+                '!' => {
+                    if self.is_next('=') {
+                        self.make_token(TokenType::BangEqual, ch.to_string(), self.line, None)
+                    } else {
+                        self.make_token(TokenType::Bang, ch.to_string(), self.line, None)
+                    }
+                }
+                '=' => {
+                    if self.is_next('=') {
+                        self.make_token(TokenType::EqualEqual, ch.to_string(), self.line, None)
+                    } else {
+                        self.make_token(TokenType::Equal, ch.to_string(), self.line, None)
+                    }
+                }
+                '>' => {
+                    if self.is_next('=') {
+                        self.make_token(TokenType::GreaterEqual, ch.to_string(), self.line, None)
+                    } else {
+                        self.make_token(TokenType::Greater, ch.to_string(), self.line, None)
+                    }
+                }
+                '<' => {
+                    if self.is_next('=') {
+                        self.make_token(TokenType::LessEqual, ch.to_string(), self.line, None)
+                    } else {
+                        self.make_token(TokenType::Less, ch.to_string(), self.line, None)
+                    }
+                }
+                '.' => {
+                    if self.is_next('.') {
+                        self.make_token(TokenType::Range, ch.to_string(), self.line, None)
+                    } else {
+                        self.make_token(TokenType::Dot, ch.to_string(), self.line, None)
+                    }
+                }
+
+                _ => {
+                    todo!("multi character tokens go here")
+                }
             }
         }
         self.make_token(TokenType::Eof, String::from(""), self.line, None);
@@ -85,6 +123,7 @@ pub enum TokenType {
     Star,
     Semicolon,
     Colon,
+
     Bang,
     BangEqual,
     Equal,
@@ -93,6 +132,7 @@ pub enum TokenType {
     GreaterEqual,
     Less,
     LessEqual,
+
     And,
     Or,
     Let,
