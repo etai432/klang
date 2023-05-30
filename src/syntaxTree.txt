@@ -1,0 +1,6 @@
+expressions are the simplest blocks of codes, those are the lines you see that end with ;
+expression => literal | unary | binary | grouping;
+literal => Value;
+grouping => "(" expression ")";
+unary => ("-" | "!") expression;
+binary => expression operator expression;
