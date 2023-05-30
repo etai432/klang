@@ -131,6 +131,17 @@ impl<'a> Scanner<'a> {
             line,
         })
     }
+
+    fn consume_until(&mut self, until: char, ch: char) -> String {
+        let mut t = String::from(ch);
+
+        while self.chars.peek().unwrap() != &until {
+            t.push(self.chars.next().unwrap())
+        }
+
+        t
+    }
+
     fn is_next(&mut self, ch: char) -> bool {
         self.chars.peek() == Some(&ch)
     }
