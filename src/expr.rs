@@ -16,14 +16,18 @@ pub enum Expr {
         paren: Token,
         arguments: Vec<Box<Expr>>,
     },
-    Grouping(Grouping), // "(" expression ")"
+    Grouping {
+        expression: Box<Expr>,
+    }, // "(" expression ")"
     Literal(Value),
     Logical {
         left: Box<Expr>,
         operator: Token,
         right: Box<Expr>,
     }, // and / or
-    Unary(Unary), // ! or - (negate)
+    Unary {
+        expression: Box<Expr>,
+    }, // ! or - (negate)
     Variable {
         name: Token,
     },
