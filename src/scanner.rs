@@ -34,6 +34,7 @@ impl<'a> Scanner<'a> {
             keywords,
         }
     }
+
     pub fn scan_tokens(&mut self) {
         while let Some(ch) = self.chars.next() {
             match ch {
@@ -112,7 +113,7 @@ impl<'a> Scanner<'a> {
                     if ch.is_ascii_digit() {
                         self.number(ch);
                     } else if ch.is_ascii_alphabetic() {
-                        self.identifier();
+                        self.identifier(ch);
                     } else {
                         panic!("unexpected character");
                     }
@@ -132,8 +133,31 @@ impl<'a> Scanner<'a> {
     fn is_next(&mut self, ch: char) -> bool {
         self.chars.peek() == Some(&ch)
     }
-    fn identifier(&mut self) {
-        //check for keyword first
+
+    fn identifier(&mut self, ch: char) {
+        todo!("fix function or gay");
+        while self.chars.peek().unwrap_or(&'\0').is_ascii_alphabetic() {
+            let mut word = String::new();
+            word.push(ch);
+            if self.chars.peek() != None {
+                while !self.chars.peek().unwrap().is_whitespace() {
+                    word.push(self.chars.next().unwrap())
+                }
+            } else {
+                println!("NOne")
+            }
+            println!("{word}")
+            /* if self.keywords.contains_key(word.as_str()) {S
+                match word.as_str() {
+                    "let" => {
+                        todo!("fix error")
+                    }
+                    _ => {
+                        panic!("bitch")
+                    }
+                }
+            } */
+        }
     }
     fn number(&mut self, ch: char) {
         let mut number = String::from(ch);
