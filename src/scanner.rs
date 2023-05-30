@@ -23,7 +23,6 @@ impl<'a> Scanner<'a> {
 
     pub fn scan_tokens(&mut self) {
         while let Some(ch) = self.chars.next() {
-            println!("{}", self.line);
             match ch {
                 '(' => self.make_token(TokenType::LeftParen, ch.to_string(), self.line, None),
                 ')' => self.make_token(TokenType::RightParen, ch.to_string(), self.line, None),
