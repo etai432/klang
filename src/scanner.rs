@@ -39,7 +39,8 @@ impl<'a> Scanner<'a> {
                 ':' => self.make_token(TokenType::Colon, ch.to_string(), self.line, None),
                 '/' => {
                     if self.is_next('/') {
-                        while self.chars.next() != Some('\n') || self.chars.peek().is_none() {}
+                        while self.chars.next() != Some('\n') && self.chars.peek().is_some() {}
+                        self.line += 1;
                     } else {
                         self.make_token(TokenType::Slash, ch.to_string(), self.line, None);
                     }
@@ -167,16 +168,26 @@ impl<'a> Scanner<'a> {
         }
         if self.chars.peek().unwrap_or(&'\0') == &'.' {
             number.push(self.chars.next().unwrap());
-            while self.chars.peek().unwrap_or(&'\0').is_ascii_digit() {
-                number.push(self.chars.next().unwrap());
+            if self.chars.peek().unwrap_or(&'\0') == &'.' {
+                number.pop();
+                self.make_token(TokenType::Int, "".to_string(), self.line,  match number.parse::<i64>() {
+                    Ok(e) => Some(Value::Int(e)),
+                    Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
+                });
+                self.make_token(TokenType::Range, "..".to_string(), self.line, None);
+                self.chars.next(); //consume 2nd dot
+            } else {
+                while self.chars.peek().unwrap_or(&'\0').is_ascii_digit() {
+                    number.push(self.chars.next().unwrap());
+                }
+                if number.ends_with('.') {
+                    panic!("float cannot end with a '.'")
+                }
+                self.make_token(TokenType::Float, "".to_string(), self.line,  match number.parse::<f64>() {
+                    Ok(e) => Some(Value::Float(e)),
+                    Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
+                })
             }
-            if number.ends_with('.') {
-                panic!("float cannot end with a '.'")
-            }
-            self.make_token(TokenType::Float, "".to_string(), self.line,  match number.parse::<f64>() {
-                Ok(e) => Some(Value::Float(e)),
-                Err(_) => panic!("failed to parse integer, fuck you (wouldnt happen if your function works loser)"),
-            })
         } else {
             self.make_token(TokenType::Int, "".to_string(), self.line,  match number.parse::<i64>() {
                 Ok(e) => Some(Value::Int(e)),
