@@ -6,7 +6,11 @@ pub enum Expr {
         name: Token,
         value: Box<Expr>,
     }, //assignment
-    Binary(Binary), //binary operations (+, -, .., ==, !=, <=, ..)
+    Binary {
+        left: Box<Expr>,
+        operator: Token,
+        right: Box<Expr>,
+    }, //binary operations (+, -, .., ==, !=, <=, ..)
     Call {
         callee: Box<Expr>,
         paren: Token,
@@ -14,10 +18,18 @@ pub enum Expr {
     },
     Grouping(Grouping), // "(" expression ")"
     Literal(Value),
-    Logical(Logical), // and / or
-    Unary(Unary),     // ! or - (negate)
+    Logical {
+        left: Box<Expr>,
+        operator: Token,
+        right: Box<Expr>,
+    }, // and / or
+    Unary(Unary), // ! or - (negate)
     Variable {
         name: Token,
     },
-    Range(Range), // range
+    Range {
+        min: i64,
+        max: i64,
+        step: Option<i64>,
+    }, // range
 }
