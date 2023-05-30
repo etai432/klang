@@ -35,4 +35,7 @@ impl Parser {
     fn error(&self) {
         //calls parser error
     }
+    fn consume(&mut self, t_type: TokenType, msg: &str) -> Option<Token> {
+        //checking if the next token is of type t_type, and returning it, or erroring.
+    }
 }
