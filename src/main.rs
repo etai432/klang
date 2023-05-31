@@ -31,7 +31,7 @@ fn main() -> Result<(), std::io::Error> {
 fn run_file(path: &str, relfilename: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
-    // let tokens: Vec<Token> = scanner.scan_tokens();
-    // let mut parser = parser::Parser::new(tokens, relfilename);
-    println!("{:?}", scanner.scan_tokens());
+    let tokens: Vec<Token> = scanner.scan_tokens();
+    let mut parser = parser::Parser::new(tokens, relfilename);
+    println!("{:?}", parser.parse());
 }

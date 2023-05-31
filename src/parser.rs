@@ -15,6 +15,9 @@ impl<'a> Parser<'a> {
             filename,
         }
     }
+    pub fn parse(&mut self) -> Expr {
+        self.expression()
+    }
 
     fn expression(&mut self) -> Expr {
         self.equality()
@@ -90,13 +93,6 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> Expr {
-        //handle bool (true, false)
-        //handle string
-        //handle int
-        //handle float
-        //return Literal
-        //also handle for grouping and variable
-
         if self.match_tokens(&[TokenType::Bool]) {
             if self.previous().lexeme == "true" {
                 return Expr::Literal(Value::Bool(true));
