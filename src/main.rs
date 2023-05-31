@@ -4,8 +4,8 @@ mod expr;
 mod parser;
 mod scanner;
 use error::KlangError;
+use scanner::Token;
 use std::path::Path;
-
 fn main() -> Result<(), std::io::Error> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -28,6 +28,7 @@ fn main() -> Result<(), std::io::Error> {
 fn run_file(path: &str, relfilename: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
-    scanner.scan_tokens();
+    let tokens: Vec<Token> = scanner.scan_tokens();
+    let mut parser = parser::Parser::new(tokens, relfilename.to_string());
     println!("{:?}", scanner.tokens);
 }

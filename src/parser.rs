@@ -1,12 +1,19 @@
+use crate::error::KlangError;
 use crate::expr::Expr;
 use crate::scanner::{Token, TokenType};
+
 pub struct Parser {
     pub tokens: Vec<Token>,
     current: usize,
+    filename: String,
 }
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Parser {
-        Parser { tokens, current: 0 }
+    pub fn new(tokens: Vec<Token>, filename: String) -> Parser {
+        Parser {
+            tokens,
+            current: 0,
+            filename: filename,
+        }
     }
     fn equality(&mut self) -> Expr {
         let left: Expr = self.comparison();
@@ -69,8 +76,13 @@ impl Parser {
     fn previous(&self) -> Token {
         self.tokens[self.current - 1].clone()
     }
-    fn error(&self) {
-        //calls parser error
+    fn error(&self, msg: &str) {
+        KlangError::error(
+            KlangError::ParserError,
+            msg,
+            self.peek().line,
+            self.filename.as_str(),
+        );
     }
     fn consume(&mut self, t_type: TokenType, msg: &str) -> Option<Token> {
         //checking if the next token is of type t_type, and returning it, or erroring.
