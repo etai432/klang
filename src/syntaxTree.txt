@@ -28,7 +28,9 @@ factor => unary ( ( "/" | "*" ) unary )* ;
 unary => ( "!" | "-" ) unary | call ;
 call => primary ( "(" arguments? ")" )* ;
 arguments => expression ( "," expression )* ;
-primary => Value | "(" expression ")" | identifier ;
+
+primary => Value | "(" logic_or ")" | identifier ;
+
 type => INT | FLOAT | BOOL | STRING
 Iterable => Int..Int | Int..Int..Int | iterable type (yet to be made)
 printExpr => text {identifier}* text

@@ -26,6 +26,7 @@ pub enum Expr {
         right: Box<Expr>,
     }, // and / or
     Unary {
+        operator: Token,
         expression: Box<Expr>,
     }, // ! or - (negate)
     Variable {

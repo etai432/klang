@@ -1,6 +1,6 @@
 use crate::error::KlangError;
 use crate::expr::Expr;
-use crate::scanner::{Token, TokenType};
+use crate::scanner::{Token, TokenType, Value};
 
 pub struct Parser<'a> {
     pub tokens: Vec<Token>,
@@ -15,10 +15,15 @@ impl<'a> Parser<'a> {
             filename,
         }
     }
+
+    fn expression(&mut self) -> Expr {
+        self.equality()
+    }
+
     fn equality(&mut self) -> Expr {
         let left: Expr = self.comparison();
         if self.match_tokens(&[TokenType::BangEqual, TokenType::EqualEqual]) {
-            let operator = self.advance();
+            let operator = self.previous();
             let right: Expr = self.comparison();
             return Expr::Binary {
                 left: Box::new(left),
@@ -28,10 +33,62 @@ impl<'a> Parser<'a> {
         }
         left
     }
-    fn comparison(&mut self) -> Expr {}
-    fn term(&mut self) -> Expr {}
-    fn factor(&mut self) -> Expr {}
-    fn unary(&mut self) -> Expr {}
+    fn comparison(&mut self) -> Expr {
+        let left: Expr = self.term();
+        if self.match_tokens(&[
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+            TokenType::Less,
+            TokenType::LessEqual,
+        ]) {
+            let operator = self.previous();
+            let right: Expr = self.term();
+            return Expr::Binary {
+                left: Box::new(left),
+                operator,
+                right: Box::new(right),
+            };
+        }
+        left
+    }
+    fn term(&mut self) -> Expr {
+        let left: Expr = self.factor();
+        if self.match_tokens(&[TokenType::Plus, TokenType::Minus]) {
+            let operator = self.previous();
+            let right: Expr = self.factor();
+            return Expr::Binary {
+                left: Box::new(left),
+                operator,
+                right: Box::new(right),
+            };
+        }
+        left
+    }
+    fn factor(&mut self) -> Expr {
+        let left: Expr = self.unary();
+        if self.match_tokens(&[TokenType::Slash, TokenType::Star]) {
+            let operator = self.previous();
+            let right: Expr = self.unary();
+            return Expr::Binary {
+                left: Box::new(left),
+                operator,
+                right: Box::new(right),
+            };
+        }
+        left
+    }
+    fn unary(&mut self) -> Expr {
+        if self.match_tokens(&[TokenType::Bang, TokenType::Minus]) {
+            let operator = self.previous();
+            let e = self.unary();
+            return Expr::Unary {
+                operator,
+                expression: Box::new(e),
+            };
+        }
+        self.primary()
+    }
+
     fn primary(&mut self) -> Expr {
         //handle bool (true, false)
         //handle string
@@ -39,6 +96,45 @@ impl<'a> Parser<'a> {
         //handle float
         //return Literal
         //also handle for grouping and variable
+
+        if self.match_tokens(&[TokenType::Bool]) {
+            if self.previous().lexeme == "true" {
+                return Expr::Literal(Value::Bool(true));
+            } else {
+                return Expr::Literal(Value::Bool(false));
+            }
+        }
+        if self.match_tokens(&[TokenType::String]) {
+            return Expr::Literal(Value::String(self.previous().lexeme));
+        }
+
+        if self.match_tokens(&[TokenType::Int]) {
+            return Expr::Literal(self.previous().literal.unwrap());
+        }
+
+        if self.match_tokens(&[TokenType::Float]) {
+            return Expr::Literal(self.previous().literal.unwrap());
+        }
+
+        if self.match_tokens(&[TokenType::LeftParen]) {
+            let expression = self.expression();
+            self.consume(
+                TokenType::RightParen,
+                "expected \")\" after expression u piece of shit",
+            );
+            return Expr::Grouping {
+                expression: Box::new(expression),
+            };
+        }
+
+        if self.match_tokens(&[TokenType::Identifier]) {
+            return Expr::Variable {
+                name: self.previous(),
+            };
+        }
+
+        self.error("expected expression 8===D");
+        panic!("cock!")
     }
 
     fn match_tokens(&mut self, types: &[TokenType]) -> bool {

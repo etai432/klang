@@ -328,7 +328,7 @@ impl<'a> Scanner<'a> {
             }
         }
         self.chars.next(); //consume the 2nd "
-        self.make_token(TokenType::String, format!("\"{string}\""), self.line, None);
+        self.make_token(TokenType::String, string, self.line, None);
         for i in printables.into_iter() {
             self.tokens.push(i);
         }
