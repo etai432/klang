@@ -176,7 +176,7 @@ impl<'a> Scanner<'a> {
 
     fn identifier(&mut self, ch: char) {
         let mut word = String::from(ch);
-        while self.chars.peek().unwrap_or(&'\0').is_ascii_alphabetic() {
+        while self.chars.peek().unwrap_or(&'\0').is_ascii_alphanumeric() {
             word.push(self.chars.next().unwrap());
         }
         match word.as_str() {
@@ -279,6 +279,7 @@ impl<'a> Scanner<'a> {
         }
     }
     fn string(&mut self) {
+        let mut printables: Vec<Token> = Vec::new();
         let mut string = String::new();
         while self.chars.peek().unwrap_or(&'\0') != &'"' {
             if self.chars.peek().unwrap_or(&'\0') == &'\n' {
@@ -294,11 +295,43 @@ impl<'a> Scanner<'a> {
                 self.had_error = true;
                 break;
             } else {
-                string.push(self.chars.next().unwrap());
+                match self.chars.peek().unwrap() {
+                    '{' => {
+                        string.push(self.chars.next().unwrap());
+                        let mut string1 = String::new();
+                        if self.chars.peek() == Some(&'}') {
+                            error::KlangError::error(
+                                KlangError::ScannerError,
+                                "cannot print an empty identifier",
+                                self.line,
+                                self.filename,
+                            );
+                            self.had_error = true;
+                        }
+                        while self.chars.peek().unwrap_or(&'\0').is_ascii_alphabetic() {
+                            let ch1 = self.chars.next().unwrap();
+                            string1.push(ch1);
+                            string.push(ch1);
+                            if self.chars.peek() == Some(&'}') {
+                                printables.push(Token {
+                                    tt: TokenType::Printable,
+                                    lexeme: string1,
+                                    literal: None,
+                                    line: self.line,
+                                });
+                                break;
+                            }
+                        }
+                    }
+                    _ => string.push(self.chars.next().unwrap()),
+                }
             }
         }
         self.chars.next(); //consume the 2nd "
-        self.make_token(TokenType::String, format!("\"{string}\""), self.line, None)
+        self.make_token(TokenType::String, format!("\"{string}\""), self.line, None);
+        for i in printables.into_iter() {
+            self.tokens.push(i);
+        }
     }
 }
 
@@ -343,6 +376,7 @@ pub enum TokenType {
     Print,
     Fn,
     Return,
+    Printable,
     Eof,
 }
 
@@ -387,6 +421,7 @@ impl fmt::Display for TokenType {
             TokenType::Fn => write!(f, "function"),
             TokenType::Return => write!(f, "return"),
             TokenType::Eof => write!(f, "Eof"),
+            TokenType::Printable => write!(f, "Printable"),
         }
     }
 }

@@ -1,10 +1,13 @@
 use std::{env, fs};
 mod error;
 mod expr;
-mod parser;
+// mod parser;
 mod scanner;
 use error::KlangError;
 use scanner::Token;
+mod compiler;
+mod stmt;
+mod vm;
 use std::path::Path;
 fn main() -> Result<(), std::io::Error> {
     let args: Vec<String> = env::args().collect();
@@ -28,7 +31,7 @@ fn main() -> Result<(), std::io::Error> {
 fn run_file(path: &str, relfilename: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
-    let tokens: Vec<Token> = scanner.scan_tokens();
-    let mut parser = parser::Parser::new(tokens, relfilename);
-    println!("{:?}", scanner.tokens);
+    // let tokens: Vec<Token> = scanner.scan_tokens();
+    // let mut parser = parser::Parser::new(tokens, relfilename);
+    println!("{:?}", scanner.scan_tokens());
 }

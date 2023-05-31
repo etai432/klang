@@ -36,4 +36,8 @@ pub enum Expr {
         max: i64,
         step: Option<i64>,
     }, // range
+    Print {
+        text: Token,
+        printables: Vec<Token>,
+    },
 }
