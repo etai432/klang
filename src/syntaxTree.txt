@@ -11,7 +11,7 @@ forStmt => "for" identifier "in" Iterable block ;
 whileStmt => "while" "(" expression ")" block ;
 ifStmt => "if" "(" expression ")" block ("else" block)? ;
 block => "{" declaration "}" ;
-printStmt => "print" "(" " printExpr " ")" ;
+printStmt => "print" "(" " string " ")" ;
 exprStmt => expression ";" ;
 
 expressions are the simplest blocks of codes, those are the lines you see that end with ;
@@ -33,4 +33,3 @@ primary => Value | "(" logic_or ")" | identifier ;
 
 type => INT | FLOAT | BOOL | STRING
 Iterable => Int..Int | Int..Int..Int | iterable type (yet to be made)
-printExpr => text {identifier}* text

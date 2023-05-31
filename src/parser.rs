@@ -20,6 +20,22 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Expr {
+        self.range()
+    }
+
+    pub fn range(&mut self) -> Expr {
+        self.assignment()
+    }
+
+    pub fn assignment(&mut self) -> Expr {
+        self.or()
+    }
+
+    pub fn or(&mut self) -> Expr {
+        self.and()
+    }
+
+    pub fn and(&mut self) -> Expr {
         self.equality()
     }
 
@@ -101,7 +117,12 @@ impl<'a> Parser<'a> {
             }
         }
         if self.match_tokens(&[TokenType::String]) {
-            return Expr::Literal(Value::String(self.previous().lexeme));
+            let string = self.previous().lexeme;
+            let mut printables: Vec<Token> = Vec::new();
+            while self.match_tokens(&[TokenType::Printable]) {
+                printables.push(self.previous())
+            }
+            return Expr::Literal(Value::String { string, printables });
         }
 
         if self.match_tokens(&[TokenType::Int]) {
@@ -113,7 +134,7 @@ impl<'a> Parser<'a> {
         }
 
         if self.match_tokens(&[TokenType::LeftParen]) {
-            let expression = self.expression();
+            let expression = self.or();
             self.consume(
                 TokenType::RightParen,
                 "expected \")\" after expression u piece of shit",
@@ -136,8 +157,8 @@ impl<'a> Parser<'a> {
     fn match_tokens(&mut self, types: &[TokenType]) -> bool {
         // checks if next token is in types slice thing
 
-        for &i in types {
-            if self.check(i) {
+        for &tt in types {
+            if self.check(tt) {
                 self.advance();
                 return true;
             }

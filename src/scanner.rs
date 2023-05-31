@@ -428,7 +428,10 @@ impl fmt::Display for TokenType {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
-    String(String),
+    String {
+        string: String,
+        printables: Vec<Token>,
+    },
     Int(i64),
     Float(f64),
     Bool(bool),
@@ -437,7 +440,7 @@ pub enum Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Value::String(s) => write!(f, "\"{}\"", s),
+            Value::String { string, .. } => write!(f, "{}", string),
             Value::Int(i) => write!(f, "{}", i),
             Value::Float(fl) => write!(f, "{}", fl),
             Value::Bool(b) => write!(f, "{}", b),
@@ -445,7 +448,24 @@ impl fmt::Display for Value {
     }
 }
 
-#[derive(Debug, Clone)]
+impl Value {
+    fn string(&self, line: usize, filename: &str) -> String {
+        match self {
+            Value::String { string, .. } => todo!("handle string"),
+            _ => {
+                error::KlangError::error(
+                    KlangError::RuntimeError,
+                    "can only print strings!",
+                    line,
+                    filename,
+                );
+                std::process::exit(0);
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub tt: TokenType,
     pub lexeme: String,

@@ -1,4 +1,12 @@
-use crate::expr::*;
+use crate::{expr::*, scanner::Value};
 pub enum Stmt {
-    Print { printExpr: Expr },
+    Print { value: Value },
+    Block,
+    Expression,
+    If,
+    Var,
+    While,
+    For,
+    Fn,
+    Return,
 }

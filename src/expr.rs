@@ -14,7 +14,7 @@ pub enum Expr {
     Call {
         callee: Box<Expr>,
         paren: Token,
-        arguments: Vec<Box<Expr>>,
+        arguments: Vec<Expr>,
     },
     Grouping {
         expression: Box<Expr>,
@@ -37,8 +37,4 @@ pub enum Expr {
         max: i64,
         step: Option<i64>,
     }, // range
-    Print {
-        text: Token,
-        printables: Vec<Token>,
-    },
 }
