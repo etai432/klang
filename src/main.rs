@@ -1,7 +1,7 @@
 use std::{env, fs};
 mod error;
 mod expr;
-// mod parser;
+mod parser;
 mod scanner;
 use error::KlangError;
 use scanner::Token;
