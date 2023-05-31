@@ -2,17 +2,17 @@ use crate::error::KlangError;
 use crate::expr::Expr;
 use crate::scanner::{Token, TokenType};
 
-pub struct Parser {
+pub struct Parser<'a> {
     pub tokens: Vec<Token>,
     current: usize,
-    filename: String,
+    filename: &'a str,
 }
-impl Parser {
-    pub fn new(tokens: Vec<Token>, filename: String) -> Parser {
+impl<'a> Parser<'a> {
+    pub fn new(tokens: Vec<Token>, filename: &'a str) -> Parser {
         Parser {
             tokens,
             current: 0,
-            filename: filename,
+            filename,
         }
     }
     fn equality(&mut self) -> Expr {
@@ -81,7 +81,7 @@ impl Parser {
             KlangError::ParserError,
             msg,
             self.peek().line,
-            self.filename.as_str(),
+            self.filename,
         );
     }
     fn consume(&mut self, t_type: TokenType, msg: &str) -> Option<Token> {
