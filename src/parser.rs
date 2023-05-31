@@ -17,17 +17,16 @@ impl<'a> Parser<'a> {
     }
     fn equality(&mut self) -> Expr {
         let left: Expr = self.comparison();
-        if self.previous() != "==" || self.previous() != "!=" {
-            return left;
-        } else {
-            let operator: Token = self.previous();
+        if self.match_tokens(&[TokenType::BangEqual, TokenType::EqualEqual]) {
+            let operator = self.advance();
             let right: Expr = self.comparison();
-            Expr::Binary {
-                left,
+            return Expr::Binary {
+                left: Box::new(left),
                 operator,
-                right,
-            }
+                right: Box::new(right),
+            };
         }
+        left
     }
     fn comparison(&mut self) -> Expr {}
     fn term(&mut self) -> Expr {}
@@ -84,7 +83,11 @@ impl<'a> Parser<'a> {
             self.filename,
         );
     }
-    fn consume(&mut self, t_type: TokenType, msg: &str) -> Option<Token> {
-        //checking if the next token is of type t_type, and returning it, or erroring.
+    fn consume(&mut self, t_type: TokenType, msg: &str) -> Token {
+        if self.peek().tt == t_type {
+            return self.advance();
+        }
+        self.error(msg);
+        panic!()
     }
 }

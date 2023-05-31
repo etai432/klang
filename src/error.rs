@@ -16,5 +16,10 @@ impl KlangError {
             filename.to_string().blue().bold(),
             format!("at line {line}: {msg}").red()
         );
+        match et {
+            Self::ScannerError => (),
+            Self::ParserError => std::process::exit(0),
+            Self::RuntimeError => std::process::exit(0),
+        }
     }
 }
