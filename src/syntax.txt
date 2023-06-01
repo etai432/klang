@@ -28,7 +28,7 @@ for i in 1..7..2 {
 let y: string = read();
 print("this is how you use a print to output {y}");
 //print("text {identifier} text");
-//klang will not feature any error handling. every error will be handled by the interpreter and reported to the developer in the terminal
+//klang will not feature any error handling. every error will be handled by the parser, scanner, compiler and reported to the developer in the terminal
 //functions: all functions are public.
 //fn return_type name(arg1: type, arg2: type) {
 //    expr;

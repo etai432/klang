@@ -34,5 +34,6 @@ fn run_file(path: &str, relfilename: &str) {
     let tokens: Vec<Token> = scanner.scan_tokens();
     let mut parser = parser::Parser::new(tokens, relfilename);
     println!("{:?}", parser.tokens);
+    println!("\n\n");
     println!("{:?}", parser.parse());
 }

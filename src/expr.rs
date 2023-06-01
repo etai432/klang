@@ -13,7 +13,6 @@ pub enum Expr {
     }, //binary operations (+, -, .., ==, !=, <=, ..)
     Call {
         callee: Box<Expr>,
-        paren: Token,
         arguments: Vec<Expr>,
     },
     Grouping {

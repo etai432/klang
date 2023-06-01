@@ -35,7 +35,18 @@ impl<'a> Scanner<'a> {
                 '{' => self.make_token(TokenType::LeftBrace, ch.to_string(), self.line, None),
                 '}' => self.make_token(TokenType::RightBrace, ch.to_string(), self.line, None),
                 ',' => self.make_token(TokenType::Comma, ch.to_string(), self.line, None),
-                '-' => self.make_token(TokenType::Minus, ch.to_string(), self.line, None),
+                '-' => {
+                    if self.tokens[self.tokens.len() - 1].tt == TokenType::Minus {
+                        error::KlangError::error(
+                            KlangError::ScannerError,
+                            "we shall not allow minus spamming. use 1 bitch",
+                            self.line,
+                            self.filename,
+                        );
+                        self.had_error = true;
+                    }
+                    self.make_token(TokenType::Minus, ch.to_string(), self.line, None)
+                }
                 '+' => self.make_token(TokenType::Plus, ch.to_string(), self.line, None),
                 ';' => self.make_token(TokenType::Semicolon, ch.to_string(), self.line, None),
                 '*' => self.make_token(TokenType::Star, ch.to_string(), self.line, None),
@@ -58,6 +69,15 @@ impl<'a> Scanner<'a> {
                             None,
                         );
                     } else {
+                        if self.tokens[self.tokens.len() - 1].tt == TokenType::Bang {
+                            error::KlangError::error(
+                                KlangError::ScannerError,
+                                "we shall not allow bang spamming. use 1 bitch",
+                                self.line,
+                                self.filename,
+                            );
+                            self.had_error = true;
+                        }
                         self.make_token(TokenType::Bang, ch.to_string(), self.line, None)
                     }
                 }
@@ -314,7 +334,7 @@ impl<'a> Scanner<'a> {
                             );
                             self.had_error = true;
                         }
-                        while self.chars.peek().unwrap_or(&'\0').is_ascii_alphabetic() {
+                        while self.chars.peek().unwrap_or(&'\0').is_ascii_alphanumeric() {
                             let ch1 = self.chars.next().unwrap();
                             string1.push(ch1);
                             string.push(ch1);

@@ -1,6 +1,7 @@
 use crate::error::KlangError;
 use crate::expr::Expr;
 use crate::scanner::{Token, TokenType, Value};
+use crate::stmt::Stmt;
 
 pub struct Parser<'a> {
     pub tokens: Vec<Token>,
@@ -15,12 +16,186 @@ impl<'a> Parser<'a> {
             filename,
         }
     }
-    pub fn parse(&mut self) -> Expr {
-        self.expression()
+    pub fn parse(&mut self) -> Stmt {
+        self.var_decl()
     }
-
-    fn expression(&mut self) -> Expr {
-        self.assignment()
+    // fn declaration(&mut self) -> Stmt {}
+    fn fn_decl(&mut self) -> Stmt {
+        if self.match_tokens(&[
+            TokenType::Int,
+            TokenType::Float,
+            TokenType::Bool,
+            TokenType::String,
+        ]) {
+            let return_t = self.previous();
+            let name = self.consume(TokenType::Identifier, "must have a function name");
+            if self.match_tokens(&[TokenType::LeftParen]) {
+                if self.match_tokens(&[TokenType::RightParen]) {
+                    return Stmt::Fn {
+                        return_t: Some(return_t),
+                        name,
+                        params: Vec::new(),
+                        body: Box::new(self.block()),
+                    };
+                }
+                let mut vec: Vec<(Token, Token)> = Vec::new();
+                let mut iden =
+                    self.consume(TokenType::Identifier, "argument must be an identifier");
+                self.consume(TokenType::Colon, "must specify identifier type using a :");
+                let mut t: Token;
+                if self.match_tokens(&[
+                    TokenType::Int,
+                    TokenType::Float,
+                    TokenType::Bool,
+                    TokenType::String,
+                ]) {
+                    t = self.previous();
+                } else {
+                    self.error("must specify identifier type");
+                    panic!("cock")
+                }
+                vec.push((iden, t));
+                while self.match_tokens(&[TokenType::Comma]) {
+                    iden = self.consume(TokenType::Identifier, "parameter must be an identifier");
+                    self.consume(TokenType::Colon, "must specify identifier type using a :");
+                    if self.match_tokens(&[
+                        TokenType::Int,
+                        TokenType::Float,
+                        TokenType::Bool,
+                        TokenType::String,
+                    ]) {
+                        t = self.previous();
+                    } else {
+                        self.error("must specify identifier type");
+                        panic!("cock")
+                    }
+                    vec.push((iden, t));
+                }
+                self.consume(TokenType::RightParen, "gotta close the call dude");
+                return Stmt::Fn {
+                    return_t: Some(return_t),
+                    name,
+                    params: vec,
+                    body: Box::new(self.block()),
+                };
+            }
+        } else {
+            let name = self.consume(TokenType::Identifier, "must have a function name");
+            if self.match_tokens(&[TokenType::LeftParen]) {
+                if self.match_tokens(&[TokenType::RightParen]) {
+                    return Stmt::Fn {
+                        return_t: None,
+                        name,
+                        params: Vec::new(),
+                        body: Box::new(self.block()),
+                    };
+                }
+                let mut vec: Vec<(Token, Token)> = Vec::new();
+                let mut iden =
+                    self.consume(TokenType::Identifier, "argument must be an identifier");
+                self.consume(TokenType::Colon, "must specify identifier type using a :");
+                let mut t: Token;
+                if self.match_tokens(&[
+                    TokenType::Int,
+                    TokenType::Float,
+                    TokenType::Bool,
+                    TokenType::String,
+                ]) {
+                    t = self.previous();
+                } else {
+                    self.error("must specify identifier type");
+                    panic!("cock")
+                }
+                vec.push((iden, t));
+                while self.match_tokens(&[TokenType::Comma]) {
+                    iden = self.consume(TokenType::Identifier, "parameter must be an identifier");
+                    self.consume(TokenType::Colon, "must specify identifier type using a :");
+                    if self.match_tokens(&[
+                        TokenType::Int,
+                        TokenType::Float,
+                        TokenType::Bool,
+                        TokenType::String,
+                    ]) {
+                        t = self.previous();
+                    } else {
+                        self.error("must specify identifier type");
+                        panic!("cock")
+                    }
+                    vec.push((iden, t));
+                }
+                self.consume(TokenType::RightParen, "gotta close the call dude");
+                return Stmt::Fn {
+                    return_t: None,
+                    name,
+                    params: vec,
+                    body: Box::new(self.block()),
+                };
+            }
+        }
+        panic!("if you get here, ksang has problemo in code")
+    }
+    fn var_decl(&mut self) -> Stmt {
+        let name = self.consume(TokenType::Identifier, "must define a variable name");
+        self.consume(TokenType::Colon, "must specify variable type using a :");
+        if self.match_tokens(&[
+            TokenType::Int,
+            TokenType::Float,
+            TokenType::Bool,
+            TokenType::String,
+        ]) {
+            let t = self.previous();
+            if self.match_tokens(&[TokenType::Equal]) {
+                let value = self.logical();
+                self.consume(TokenType::Semicolon, "missing ; at the end of the line");
+                return Stmt::Var {
+                    name,
+                    t,
+                    value: Some(value),
+                };
+            }
+            self.consume(TokenType::Semicolon, "missing ; at the end of the line");
+            return Stmt::Var {
+                name,
+                t,
+                value: None,
+            };
+        }
+        self.error("must specify variable type");
+        panic!()
+    }
+    // fn statement(&mut self) -> Stmt {}
+    // fn returnStmt(&mut self) -> Stmt {}
+    // fn forStmt(&mut self) -> Stmt {}
+    // fn ifStmt(&mut self) -> Stmt {}
+    // fn whileStmt(&mut self) -> Stmt {}
+    fn block(&mut self) -> Stmt {
+        Stmt::Block(Vec::new())
+    }
+    fn print_stmt(&mut self) -> Stmt {
+        self.consume(
+            TokenType::LeftParen,
+            "gotta put ( after a print yk how it is",
+        );
+        let stmt = Stmt::Print(match self.primary() {
+            Expr::Literal(Value::String { string, printables }) => {
+                Value::String { string, printables }
+            }
+            _ => {
+                self.error("can only print strings");
+                panic!("balls")
+            }
+        });
+        self.consume(
+            TokenType::RightParen,
+            "gotta put ) at the end of a print yk how it is",
+        );
+        self.consume(TokenType::Semicolon, "missing ; at the end of the line");
+        stmt
+    }
+    fn expr_stmt(&mut self) -> Stmt {
+        let stmt = Stmt::Expression(self.assignment());
+        self.consume(TokenType::Semicolon, "missing ; at the end of the line");
+        stmt
     }
 
     pub fn assignment(&mut self) -> Expr {
@@ -92,7 +267,7 @@ impl<'a> Parser<'a> {
         let left: Expr = self.factor();
         if self.match_tokens(&[TokenType::Plus, TokenType::Minus]) {
             let operator = self.previous();
-            let right: Expr = self.factor();
+            let right: Expr = self.term();
             return Expr::Binary {
                 left: Box::new(left),
                 operator,
@@ -105,7 +280,7 @@ impl<'a> Parser<'a> {
         let left: Expr = self.range();
         if self.match_tokens(&[TokenType::Slash, TokenType::Star]) {
             let operator = self.previous();
-            let right: Expr = self.range();
+            let right: Expr = self.factor();
             return Expr::Binary {
                 left: Box::new(left),
                 operator,
@@ -158,13 +333,36 @@ impl<'a> Parser<'a> {
     fn unary(&mut self) -> Expr {
         if self.match_tokens(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.previous();
-            let e = self.unary();
+            let e = self.primary();
             return Expr::Unary {
                 operator,
                 expression: Box::new(e),
             };
         }
-        self.primary()
+        self.call()
+    }
+
+    fn call(&mut self) -> Expr {
+        let expr = self.primary();
+        if self.match_tokens(&[TokenType::LeftParen]) {
+            if self.match_tokens(&[TokenType::RightParen]) {
+                return Expr::Call {
+                    callee: Box::new(expr),
+                    arguments: Vec::new(),
+                };
+            }
+            let mut vec: Vec<Expr> = Vec::new();
+            vec.push(self.logical());
+            while self.match_tokens(&[TokenType::Comma]) {
+                vec.push(self.logical());
+            }
+            self.consume(TokenType::RightParen, "gotta close the call dude");
+            return Expr::Call {
+                callee: Box::new(expr),
+                arguments: vec,
+            };
+        }
+        expr
     }
 
     fn primary(&mut self) -> Expr {
@@ -187,11 +385,6 @@ impl<'a> Parser<'a> {
         if self.match_tokens(&[TokenType::Int, TokenType::Float]) {
             return Expr::Literal(self.previous().literal.unwrap());
         }
-
-        /* if self.match_tokens(&[TokenType::Float]) {
-                   return Expr::Literal(self.previous().literal.unwrap());
-               }
-        */
         if self.match_tokens(&[TokenType::LeftParen]) {
             let expression = self.logical();
             self.consume(
@@ -213,8 +406,6 @@ impl<'a> Parser<'a> {
     }
 
     fn match_tokens(&mut self, types: &[TokenType]) -> bool {
-        // checks if next token is in types slice thing
-
         for &tt in types {
             if self.check(tt) {
                 self.advance();
