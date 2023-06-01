@@ -28,15 +28,32 @@ impl<'a> Parser<'a> {
     }
 
     pub fn assignment(&mut self) -> Expr {
-        self.or()
+        if self.match_tokens(&[TokenType::Identifier]) {
+            if self.match_tokens(&[TokenType::Equal]) {
+                let name: Token = self.previous();
+                let value: Expr = self.logical();
+                return Expr::Assign {
+                    name,
+                    value: Box::new(value),
+                };
+            }
+            self.error("missing = sign u fuckin bozo")
+        }
+        self.logical()
     }
 
-    pub fn or(&mut self) -> Expr {
-        self.and()
-    }
-
-    pub fn and(&mut self) -> Expr {
-        self.equality()
+    pub fn logical(&mut self) -> Expr {
+        let left: Expr = self.equality();
+        if self.match_tokens(&[TokenType::And, TokenType::Or]) {
+            let operator = self.previous();
+            let right: Expr = self.equality();
+            return Expr::Binary {
+                left: Box::new(left),
+                operator,
+                right: Box::new(right),
+            };
+        }
+        left
     }
 
     fn equality(&mut self) -> Expr {

@@ -20,11 +20,7 @@ pub enum Expr {
         expression: Box<Expr>,
     }, // "(" expression ")"
     Literal(Value),
-    Logical {
-        left: Box<Expr>,
-        operator: Token,
-        right: Box<Expr>,
-    }, // and / or
+
     Unary {
         operator: Token,
         expression: Box<Expr>,
