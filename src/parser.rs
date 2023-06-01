@@ -28,18 +28,23 @@ impl<'a> Parser<'a> {
     }
 
     pub fn assignment(&mut self) -> Expr {
-        if self.match_tokens(&[TokenType::Identifier]) {
-            if self.match_tokens(&[TokenType::Equal]) {
-                let name: Token = self.previous();
-                let value: Expr = self.logical();
-                return Expr::Assign {
-                    name,
-                    value: Box::new(value),
-                };
+        let identifier = self.logical();
+        if self.match_tokens(&[TokenType::Equal]) {
+            let value = self.logical();
+            match identifier {
+                Expr::Variable { name } => {
+                    return Expr::Assign {
+                        name,
+                        value: Box::new(value),
+                    }
+                }
+                _ => {
+                    self.error("cannot assign to a non variable");
+                    panic!();
+                }
             }
-            self.error("missing = sign u fuckin bozo")
         }
-        self.logical()
+        identifier
     }
 
     pub fn logical(&mut self) -> Expr {
