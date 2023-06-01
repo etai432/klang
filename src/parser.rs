@@ -151,7 +151,7 @@ impl<'a> Parser<'a> {
                }
         */
         if self.match_tokens(&[TokenType::LeftParen]) {
-            let expression = self.or();
+            let expression = self.logical();
             self.consume(
                 TokenType::RightParen,
                 "expected \")\" after expression u piece of shit",
