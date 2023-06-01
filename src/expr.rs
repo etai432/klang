@@ -29,8 +29,8 @@ pub enum Expr {
         name: Token,
     },
     Range {
-        min: i64,
-        max: i64,
-        step: Option<i64>,
+        min: Box<Expr>,
+        max: Box<Expr>,
+        step: Box<Expr>,
     }, // range
 }

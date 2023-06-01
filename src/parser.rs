@@ -20,11 +20,47 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Expr {
-        self.range()
+        self.assignment()
     }
 
     pub fn range(&mut self) -> Expr {
-        self.assignment()
+        let start = self.assignment();
+        if self.match_tokens(&[TokenType::Range]) {
+            match start {
+                Expr::Literal(_) => (),
+                Expr::Variable { name: _ } => (),
+                _ => {
+                    self.error("you can only index a range using an integer");
+                    panic!();
+                }
+            }
+            let end = self.primary();
+            match end {
+                Expr::Literal(_) => (),
+                Expr::Variable { name: _ } => (),
+                _ => {
+                    self.error("you can only index a range using an integer");
+                    panic!();
+                }
+            }
+            if self.match_tokens(&[TokenType::Range]) {
+                let step = self.primary();
+                match step {
+                    Expr::Literal(_) => (),
+                    Expr::Variable { name: _ } => (),
+                    _ => {
+                        self.error("you can only index a range using an integer");
+                        panic!();
+                    }
+                }
+                return Expr::Range {
+                    min: Box::new(start),
+                    max: Box::new(end),
+                    step: Box::new(step),
+                };
+            }
+        }
+        start
     }
 
     pub fn assignment(&mut self) -> Expr {
