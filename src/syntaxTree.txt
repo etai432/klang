@@ -16,7 +16,7 @@ exprStmt => expression ";" ;
 
 expressions are the simplest blocks of codes, those are the lines you see that end with ;
 expression => range;
-range => Int..Int | Int..Int..Int | assignment;
+range => unary".."unary(".."unary)? | assignment;
 assignment => IDENTIFIER "=" assignment | logic_or ;
 logic_or => logic_and ( "or" logic_and )* ;
 logic_and => equality ( "and" equality )* ;
@@ -28,7 +28,6 @@ factor => unary ( ( "/" | "*" ) unary )* ;
 unary => ( "!" | "-" ) unary | call ;
 call => primary ( "(" arguments? ")" )* ;
 arguments => expression ( "," expression )* ;
-
 primary => Value | "(" logic_or ")" | identifier ;
 
 type => INT | FLOAT | BOOL | STRING
