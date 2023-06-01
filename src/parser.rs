@@ -125,14 +125,14 @@ impl<'a> Parser<'a> {
             return Expr::Literal(Value::String { string, printables });
         }
 
-        if self.match_tokens(&[TokenType::Int]) {
+        if self.match_tokens(&[TokenType::Int, TokenType::Float]) {
             return Expr::Literal(self.previous().literal.unwrap());
         }
 
-        if self.match_tokens(&[TokenType::Float]) {
-            return Expr::Literal(self.previous().literal.unwrap());
-        }
-
+        /* if self.match_tokens(&[TokenType::Float]) {
+                   return Expr::Literal(self.previous().literal.unwrap());
+               }
+        */
         if self.match_tokens(&[TokenType::LeftParen]) {
             let expression = self.or();
             self.consume(
