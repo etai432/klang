@@ -23,46 +23,6 @@ impl<'a> Parser<'a> {
         self.assignment()
     }
 
-    pub fn range(&mut self) -> Expr {
-        let start = self.assignment();
-        if self.match_tokens(&[TokenType::Range]) {
-            match start {
-                Expr::Literal(_) => (),
-                Expr::Variable { name: _ } => (),
-                _ => {
-                    self.error("you can only index a range using an integer");
-                    panic!();
-                }
-            }
-            let end = self.primary();
-            match end {
-                Expr::Literal(_) => (),
-                Expr::Variable { name: _ } => (),
-                _ => {
-                    self.error("you can only index a range using an integer");
-                    panic!();
-                }
-            }
-            if self.match_tokens(&[TokenType::Range]) {
-                let step = self.primary();
-                match step {
-                    Expr::Literal(_) => (),
-                    Expr::Variable { name: _ } => (),
-                    _ => {
-                        self.error("you can only index a range using an integer");
-                        panic!();
-                    }
-                }
-                return Expr::Range {
-                    min: Box::new(start),
-                    max: Box::new(end),
-                    step: Box::new(step),
-                };
-            }
-        }
-        start
-    }
-
     pub fn assignment(&mut self) -> Expr {
         let identifier = self.logical();
         if self.match_tokens(&[TokenType::Equal]) {
@@ -142,10 +102,10 @@ impl<'a> Parser<'a> {
         left
     }
     fn factor(&mut self) -> Expr {
-        let left: Expr = self.unary();
+        let left: Expr = self.range();
         if self.match_tokens(&[TokenType::Slash, TokenType::Star]) {
             let operator = self.previous();
-            let right: Expr = self.unary();
+            let right: Expr = self.range();
             return Expr::Binary {
                 left: Box::new(left),
                 operator,
@@ -153,6 +113,47 @@ impl<'a> Parser<'a> {
             };
         }
         left
+    }
+    pub fn range(&mut self) -> Expr {
+        let start = self.unary();
+        if self.match_tokens(&[TokenType::Range]) {
+            match &start {
+                Expr::Literal(Value::Int(_)) | Expr::Variable { name: _ } => {}
+                _ => {
+                    self.error("you can only index a range using an integer");
+                    panic!();
+                }
+            }
+            let end = self.unary();
+            match &end {
+                Expr::Literal(Value::Int(_)) | Expr::Variable { name: _ } => {}
+                _ => {
+                    self.error("you can only index a range using an integer");
+                    panic!();
+                }
+            }
+            if self.match_tokens(&[TokenType::Range]) {
+                let step = self.unary();
+                match &step {
+                    Expr::Literal(Value::Int(_)) | Expr::Variable { name: _ } => {}
+                    _ => {
+                        self.error("you can only index a range using an integer");
+                        panic!();
+                    }
+                }
+                return Expr::Range {
+                    min: Box::new(start),
+                    max: Box::new(end),
+                    step: Some(Box::new(step)),
+                };
+            }
+            return Expr::Range {
+                min: Box::new(start),
+                max: Box::new(end),
+                step: None,
+            };
+        }
+        start
     }
     fn unary(&mut self) -> Expr {
         if self.match_tokens(&[TokenType::Bang, TokenType::Minus]) {
@@ -207,8 +208,7 @@ impl<'a> Parser<'a> {
                 name: self.previous(),
             };
         }
-
-        self.error("expected expression 8===D");
+        self.error(&format!("expected value found {}", self.peek().tt));
         panic!("cock!")
     }
 

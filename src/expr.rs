@@ -31,6 +31,6 @@ pub enum Expr {
     Range {
         min: Box<Expr>,
         max: Box<Expr>,
-        step: Box<Expr>,
+        step: Option<Box<Expr>>,
     }, // range
 }

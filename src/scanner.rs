@@ -102,7 +102,13 @@ impl<'a> Scanner<'a> {
                 }
                 '.' => {
                     if self.is_next('.') {
-                        self.make_token(TokenType::Range, ch.to_string(), self.line, None)
+                        let next = self.chars.next().unwrap();
+                        self.make_token(
+                            TokenType::Range,
+                            String::from(ch) + &String::from(next),
+                            self.line,
+                            None,
+                        );
                     } else {
                         self.make_token(TokenType::Dot, ch.to_string(), self.line, None)
                     }
