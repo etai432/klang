@@ -1,3 +1,4 @@
+#![allow(unused)]
 use crate::error::KlangError;
 use crate::expr::Expr;
 use crate::scanner::{Token, TokenType, Value};
@@ -19,7 +20,16 @@ impl<'a> Parser<'a> {
     pub fn parse(&mut self) -> Stmt {
         self.expr_stmt()
     }
-    // fn declaration(&mut self) -> Stmt {}
+    fn declaration(&mut self) -> Stmt {
+        if self.match_tokens(&[TokenType::Let]) {
+            self.var_decl()
+        } else if self.match_tokens(&[TokenType::Fn]) {
+            self.fn_decl()
+        } else {
+            self.statement()
+        }
+    }
+
     fn fn_decl(&mut self) -> Stmt {
         if self.match_tokens(&[
             TokenType::Int,
@@ -163,11 +173,32 @@ impl<'a> Parser<'a> {
         self.error("must specify variable type");
         panic!()
     }
-    // fn statement(&mut self) -> Stmt {}
-    // fn returnStmt(&mut self) -> Stmt {}
-    // fn forStmt(&mut self) -> Stmt {}
-    // fn ifStmt(&mut self) -> Stmt {}
-    // fn whileStmt(&mut self) -> Stmt {}
+
+    fn statement(&mut self) -> Stmt {
+        if self.match_tokens(&[TokenType::Print]) {
+            self.print_stmt()
+        } else if self.match_tokens(&[TokenType::LeftBrace]) {
+            self.block()
+        } else if self.match_tokens(&[TokenType::If]) {
+            self.if_stmt()
+        } else if self.match_tokens(&[TokenType::While]) {
+            self.while_stmt()
+        } else if self.match_tokens(&[TokenType::For]) {
+            self.for_stmt()
+        } else if self.match_tokens(&[TokenType::Return]) {
+            self.return_stmt()
+        } else {
+            self.expr_stmt()
+        }
+    }
+
+    fn return_stmt(&mut self) -> Stmt {
+        let cum = self.logical();
+    }
+
+    fn for_stmt(&mut self) -> Stmt {}
+    fn if_stmt(&mut self) -> Stmt {}
+    fn while_stmt(&mut self) -> Stmt {}
     fn block(&mut self) -> Stmt {
         Stmt::Block(Vec::new())
     }
