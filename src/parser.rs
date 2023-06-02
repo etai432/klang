@@ -1,4 +1,6 @@
 #![allow(unused)]
+use std::io::BufRead;
+
 use crate::error::KlangError;
 use crate::expr::Expr;
 use crate::scanner::{Token, TokenType, Value};
@@ -194,14 +196,63 @@ impl<'a> Parser<'a> {
 
     fn return_stmt(&mut self) -> Stmt {
         let cum = self.logical();
+        self.consume(TokenType::Semicolon, "missing ; at the end of lien");
+        return Stmt::Return(cum);
     }
 
-    fn for_stmt(&mut self) -> Stmt {}
-    fn if_stmt(&mut self) -> Stmt {}
-    fn while_stmt(&mut self) -> Stmt {}
+    fn for_stmt(&mut self) -> Stmt {
+        let identifier = self.consume(TokenType::Identifier, "missing identifier 8=D");
+        self.consume(TokenType::In, "missing in");
+        let iterable = self.range();
+        match iterable {
+            Expr::Range {
+                min: _,
+                max: _,
+                step: _,
+            } => (),
+            _ => self.error("\"in\" must be used on an iterable"),
+        }
+
+        let block = Box::new(self.block());
+        return Stmt::For {
+            identifier,
+            iterable,
+            block,
+        };
+    }
+
+    fn if_stmt(&mut self) -> Stmt {
+        let condition = self.logical();
+        let block = Box::new(self.block());
+        if self.match_tokens(&[TokenType::Else]) {
+            let elseblock = Some(Box::new(self.block()));
+            return Stmt::If {
+                condition,
+                block,
+                elseblock,
+            };
+        }
+        return Stmt::If {
+            condition,
+            block,
+            elseblock: None,
+        };
+    }
+
+    fn while_stmt(&mut self) -> Stmt {
+        let condition = self.logical();
+        let block = self.block();
+
+        return Stmt::While {
+            condition,
+            block: Box::new(block),
+        };
+    }
+
     fn block(&mut self) -> Stmt {
         Stmt::Block(Vec::new())
     }
+
     fn print_stmt(&mut self) -> Stmt {
         self.consume(
             TokenType::LeftParen,

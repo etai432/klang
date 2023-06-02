@@ -4,3 +4,5 @@ std lib will contain: advanced types, advanced math functions, random functions,
 once we do that we can uh possibly uh add break and continue to loops, also a switch would be cool.
 once we manage that, maybe some structs but i dont think we should go for traits.
 also enums would be hella cool but it sounds super hard.
+
+add cock
