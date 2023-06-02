@@ -17,7 +17,7 @@ impl<'a> Parser<'a> {
         }
     }
     pub fn parse(&mut self) -> Stmt {
-        self.var_decl()
+        self.expr_stmt()
     }
     // fn declaration(&mut self) -> Stmt {}
     fn fn_decl(&mut self) -> Stmt {
@@ -376,9 +376,12 @@ impl<'a> Parser<'a> {
         if self.match_tokens(&[TokenType::String]) {
             let string = self.previous().lexeme;
             let mut printables: Vec<Token> = Vec::new();
+            println!("{:?}", self.previous());
             while self.match_tokens(&[TokenType::Printable]) {
-                printables.push(self.previous())
+                printables.push(self.previous());
+                self.match_tokens(&[TokenType::Comma]);
             }
+            println!("{:?}", printables);
             return Expr::Literal(Value::String { string, printables });
         }
 

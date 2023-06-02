@@ -474,23 +474,6 @@ impl fmt::Display for Value {
     }
 }
 
-impl Value {
-    fn string(&self, line: usize, filename: &str) -> String {
-        match self {
-            Value::String { string, .. } => todo!("handle string"),
-            _ => {
-                error::KlangError::error(
-                    KlangError::RuntimeError,
-                    "can only print strings!",
-                    line,
-                    filename,
-                );
-                std::process::exit(0);
-            }
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub tt: TokenType,

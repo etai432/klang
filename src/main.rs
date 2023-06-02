@@ -6,6 +6,7 @@ mod scanner;
 use error::KlangError;
 use scanner::Token;
 mod compiler;
+mod opcode;
 mod stmt;
 mod vm;
 use std::path::Path;

@@ -1,4 +1,4 @@
-use crate::compiler::{compile, Chunk, OpCode};
+use crate::compiler::{compile, Chunk};
 
 #[derive(Debug, Clone)]
 pub struct VM {
