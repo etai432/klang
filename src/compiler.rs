@@ -1,5 +1,7 @@
+use crate::error::KlangError;
 use crate::expr::Expr;
 use crate::opcode::OpCode;
+use crate::scanner::TokenType;
 use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
@@ -35,13 +37,14 @@ pub fn compile_expr(expr: Expr) -> Vec<OpCode> {
             left,
             operator,
             right,
-        } => {}
-        Expr::Call { callee, arguments } => {}
-        Expr::Grouping { expression } => {
-            for i in compile_expr(*expression) {
-                code.push(i);
-            }
+        } => {
+            code = dump(code, compile_expr(*left));
+            code = dump(code, compile_expr(*right));
+            code.push(bin(operator.tt));
         }
+
+        Expr::Call { callee, arguments } => {}
+        Expr::Grouping { expression } => code = dump(code, compile_expr(*expression)),
         Expr::Literal(x) => code.push(OpCode::Constant(x)),
         Expr::Range { min, max, step } => {}
         Expr::Unary {
@@ -51,6 +54,32 @@ pub fn compile_expr(expr: Expr) -> Vec<OpCode> {
         Expr::Variable { name } => {}
     }
     code
+}
+
+pub fn bin(operator: TokenType) -> OpCode {
+    match operator {
+        TokenType::Plus => OpCode::Add,
+        TokenType::Minus => OpCode::Subtract,
+        TokenType::Star => OpCode::Multiply,
+        TokenType::Slash => OpCode::Divide,
+        TokenType::EqualEqual => OpCode::EqualEqual,
+        TokenType::BangEqual => OpCode::NotEqual,
+        TokenType::Less => OpCode::Less,
+        TokenType::LessEqual => OpCode::LessEqual,
+        TokenType::Greater => OpCode::Greater,
+        TokenType::GreaterEqual => OpCode::GreaterEqual,
+        TokenType::And => OpCode::LogicalAnd,
+        TokenType::Or => OpCode::LogicalOr,
+        _ => panic!("how did you even get here?"),
+    }
+}
+
+pub fn un(operator: TokenType) -> OpCode {
+    match operator {
+        TokenType::Minus => OpCode::Negate,
+        TokenType::Bang => OpCode::LogicalNot,
+        _ => panic!("how did you even get here?"),
+    }
 }
 
 pub fn dump(mut main: Vec<OpCode>, se: Vec<OpCode>) -> Vec<OpCode> {

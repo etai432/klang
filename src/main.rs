@@ -38,3 +38,7 @@ fn run_file(path: &str, relfilename: &str) {
     println!("{:?}\n", expr);
     compiler::Chunk::new(compiler::compile(expr)).disassemble();
 }
+
+fn compile_file(path: &str, relfilename: &str) {
+    //this function will compile the file to bytecode and save it in the same directory
+}
