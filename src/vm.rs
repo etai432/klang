@@ -8,7 +8,7 @@ use std::collections::HashMap;
 pub struct VM {
     pub stack: Vec<Value>,
     pub chunk: Chunk,
-    pub callframe: HashMap<&'static str, Value>,
+    pub callframe: HashMap<&'static str, (Value, Type)>,
 }
 
 impl VM {
@@ -20,8 +20,16 @@ impl VM {
         }
     }
     pub fn interpret(&mut self, source: String) {
-        compile();
         self.run();
     }
     pub fn run(&mut self) {}
+}
+
+#[derive(Debug, Clone)]
+pub enum Type {
+    Int,
+    Float,
+    String,
+    Bool,
+    Known,
 }

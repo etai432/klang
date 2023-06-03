@@ -36,7 +36,10 @@ impl<'a> Scanner<'a> {
                 '}' => self.make_token(TokenType::RightBrace, ch.to_string(), self.line, None),
                 ',' => self.make_token(TokenType::Comma, ch.to_string(), self.line, None),
                 '-' => {
-                    if self.tokens[self.tokens.len() - 1].tt == TokenType::Minus {
+                    if self.tokens[self.tokens.len() - 1].tt == TokenType::Minus
+                        && self.tokens[self.tokens.len() - 2].tt != TokenType::Int
+                        && self.tokens[self.tokens.len() - 2].tt != TokenType::Float
+                    {
                         error::KlangError::error(
                             KlangError::ScannerError,
                             "we shall not allow minus spamming. use 1 bitch",
@@ -461,11 +464,7 @@ pub enum Value {
     Int(i64),
     Float(f64),
     Bool(bool),
-}
-impl Default for Value {
-    fn default() -> Self {
-        Value::Int(0)
-    }
+    None,
 }
 
 impl fmt::Display for Value {
@@ -475,6 +474,7 @@ impl fmt::Display for Value {
             Value::Int(i) => write!(f, "{}", i),
             Value::Float(fl) => write!(f, "{}", fl),
             Value::Bool(b) => write!(f, "{}", b),
+            Value::None => write!(f, "nada"),
         }
     }
 }

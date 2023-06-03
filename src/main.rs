@@ -8,8 +8,9 @@ use scanner::Token;
 mod compiler;
 mod opcode;
 mod stmt;
-// mod vm;
+mod vm;
 use std::path::Path;
+use std::time::Instant;
 fn main() -> Result<(), std::io::Error> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -30,13 +31,20 @@ fn main() -> Result<(), std::io::Error> {
 }
 
 fn run_file(path: &str, relfilename: &str) {
+    // let start = Instant::now();
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
     let tokens: Vec<Token> = scanner.scan_tokens();
     let mut parser = parser::Parser::new(tokens, relfilename);
-    let expr = parser.parse();
-    println!("{:?}\n", expr);
-    compiler::Chunk::new(compiler::compile(expr)).disassemble();
+    let ast = parser.parse();
+    println!("{:?}\n", ast);
+    compiler::Chunk::new(compiler::compile(ast)).disassemble();
+    // let duration = start.elapsed();
+    // println!(
+    //     "Elapsed time: {}.{:03}s",
+    //     duration.as_secs(),
+    //     duration.subsec_millis()
+    // );
 }
 
 fn compile_file(path: &str, relfilename: &str) {

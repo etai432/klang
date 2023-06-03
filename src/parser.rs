@@ -19,15 +19,12 @@ impl<'a> Parser<'a> {
             filename,
         }
     }
-    // pub fn parse(&mut self) -> Vec<Stmt> {
-    //     let mut statements: Vec<Stmt> = Vec::new();
-    //     while !self.is_at_end() {
-    //         statements.push(self.declaration());
-    //     }
-    //     statements
-    // }
-    pub fn parse(&mut self) -> Expr {
-        self.logical()
+    pub fn parse(&mut self) -> Vec<Stmt> {
+        let mut statements: Vec<Stmt> = Vec::new();
+        while !self.is_at_end() {
+            statements.push(self.declaration());
+        }
+        statements
     }
     fn declaration(&mut self) -> Stmt {
         if self.match_tokens(&[TokenType::Let]) {
@@ -298,7 +295,7 @@ impl<'a> Parser<'a> {
         if self.match_tokens(&[TokenType::Equal]) {
             let value = self.logical();
             match identifier {
-                Expr::Variable { name } => {
+                Expr::Variable(name) => {
                     return Expr::Assign {
                         name,
                         value: Box::new(value),
@@ -388,7 +385,7 @@ impl<'a> Parser<'a> {
         let start = self.unary();
         if self.match_tokens(&[TokenType::Range]) {
             match &start {
-                Expr::Literal(Value::Int(_)) | Expr::Variable { name: _ } => {}
+                Expr::Literal(Value::Int(_)) | Expr::Variable(_) => {}
                 _ => {
                     self.error("you can only index a range using an integer");
                     panic!();
@@ -396,7 +393,7 @@ impl<'a> Parser<'a> {
             }
             let end = self.unary();
             match &end {
-                Expr::Literal(Value::Int(_)) | Expr::Variable { name: _ } => {}
+                Expr::Literal(Value::Int(_)) | Expr::Variable(_) => {}
                 _ => {
                     self.error("you can only index a range using an integer");
                     panic!();
@@ -405,7 +402,7 @@ impl<'a> Parser<'a> {
             if self.match_tokens(&[TokenType::Range]) {
                 let step = self.unary();
                 match &step {
-                    Expr::Literal(Value::Int(_)) | Expr::Variable { name: _ } => {}
+                    Expr::Literal(Value::Int(_)) | Expr::Variable(_) => {}
                     _ => {
                         self.error("you can only index a range using an integer");
                         panic!();
@@ -440,6 +437,9 @@ impl<'a> Parser<'a> {
     fn call(&mut self) -> Expr {
         let expr = self.primary();
         if self.match_tokens(&[TokenType::LeftParen]) {
+            if !matches!(expr, Expr::Variable(_)) {
+                self.error("sir were you trying to call a function USING AN INTEGER?")
+            }
             if self.match_tokens(&[TokenType::RightParen]) {
                 return Expr::Call {
                     callee: Box::new(expr),
@@ -487,15 +487,11 @@ impl<'a> Parser<'a> {
                 TokenType::RightParen,
                 "expected \")\" after expression u piece of shit",
             );
-            return Expr::Grouping {
-                expression: Box::new(expression),
-            };
+            return Expr::Grouping(Box::new(expression));
         }
 
         if self.match_tokens(&[TokenType::Identifier]) {
-            return Expr::Variable {
-                name: self.previous(),
-            };
+            return Expr::Variable(self.previous());
         }
         self.error(&format!("expected value found {}", self.peek().tt));
         panic!("cock!")

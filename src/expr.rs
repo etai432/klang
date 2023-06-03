@@ -15,18 +15,14 @@ pub enum Expr {
         callee: Box<Expr>,
         arguments: Vec<Expr>,
     },
-    Grouping {
-        expression: Box<Expr>,
-    }, // "(" expression ")"
+    Grouping(Box<Expr>), // "(" expression ")"
     Literal(Value),
 
     Unary {
         operator: Token,
         expression: Box<Expr>,
     }, // ! or - (negate)
-    Variable {
-        name: Token,
-    },
+    Variable(Token),
     Range {
         min: Box<Expr>,
         max: Box<Expr>,
