@@ -10,7 +10,7 @@ mod opcode;
 mod stmt;
 mod vm;
 use std::path::Path;
-use std::time::Instant;
+
 macro_rules! timeit {
     ($($todo: stmt), *) => {
         use std::time::SystemTime;
@@ -46,27 +46,40 @@ macro_rules! timeit {
     };
 }
 
-fn main() -> Result<(), std::io::Error> {
+fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         eprintln!("Error: expected file path");
         std::process::exit(1);
     }
     let filename = &args[1];
+
     let path = Path::new(&filename);
     let relfilename = path.file_name().unwrap().to_str().unwrap();
+    if !filename.ends_with(".klang") {
+        KlangError::error(
+            KlangError::RuntimeError,
+            "file must have a \".klang\" extension!",
+            0,
+            relfilename,
+        );
+        panic!("sex");
+    }
+
     if let Err(e) = fs::metadata(filename) {
-        eprintln!("Error: {} is not a file: {}", filename, e);
+        KlangError::error(
+            KlangError::RuntimeError,
+            format!("File {filename} is not a file!").as_str(),
+            0,
+            relfilename,
+        );
         std::process::exit(1);
     } else {
         run_file(filename, relfilename);
     }
-
-    Ok(())
 }
 
 fn run_file(path: &str, relfilename: &str) {
-    // let start = Instant::now();
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
     let tokens: Vec<Token> = scanner.scan_tokens();
@@ -74,12 +87,6 @@ fn run_file(path: &str, relfilename: &str) {
     let ast = parser.parse();
     println!("{:?}\n", ast);
     timeit!(compiler::Chunk::new(compiler::compile(ast)).disassemble());
-    // let duration = start.elapsed();
-    // println!(
-    //     "Elapsed time: {}.{:03}s",
-    //     duration.as_secs(),
-    //     duration.subsec_millis()
-    // );
 }
 
 fn compile_file(path: &str, relfilename: &str) {
