@@ -11,15 +11,15 @@ pub struct Chunk {
 }
 
 impl Chunk {
-    pub fn new(code: Vec<OpCode>) -> Chunk {
+    pub fn new(stuff: (Vec<OpCode>, Vec<usize>)) -> Chunk {
         Chunk {
-            code,
-            lines: Vec::new(),
+            code: stuff.0,
+            lines: stuff.1,
         }
     }
     pub fn disassemble(&self) {
         for (num, instruction) in self.code.iter().enumerate() {
-            println!("{:04} {}", num, instruction);
+            println!("{:02} {:04} {}", self.lines[num], num, instruction);
         }
     }
     // pub fn disassemble_byte(&self, num: usize) {
@@ -27,21 +27,27 @@ impl Chunk {
     // }
 }
 
-pub fn compile(stmts: Vec<Stmt>) -> Vec<OpCode> {
+pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
     let mut code: Vec<OpCode> = Vec::new();
+    let mut lines: Vec<usize> = Vec::new();
     for stmt in stmts {
         match stmt {
-            Stmt::Print(val) => {
+            Stmt::Print(val, line) => {
                 code.push(OpCode::Constant(val));
+                lines.push(line);
                 code.push(OpCode::Print);
+                lines.push(line);
                 code.push(OpCode::Pop);
+                lines.push(line);
             }
-            Stmt::Block(stmts) => {
+            Stmt::Block(stmts, (start, end)) => {
                 code.push(OpCode::Scope);
-                dump(&mut code, compile(stmts));
+                lines.push(start);
+                dump(&mut code, &mut lines, compile(stmts));
                 code.push(OpCode::EndScope);
+                lines.push(end);
             }
-            Stmt::Expression(expr) => dump(&mut code, compile_expr(expr)),
+            Stmt::Expression(expr) => dump(&mut code, &mut lines, compile_expr(expr)),
             Stmt::If {
                 condition,
                 block,
@@ -49,8 +55,11 @@ pub fn compile(stmts: Vec<Stmt>) -> Vec<OpCode> {
             } => {}
             Stmt::Var { name, t, value } => {
                 match value {
-                    Some(value) => dump(&mut code, compile_expr(value)),
-                    None => code.push(OpCode::Constant(Value::None)),
+                    Some(value) => dump(&mut code, &mut lines, compile_expr(value)),
+                    None => {
+                        code.push(OpCode::Constant(Value::None));
+                        lines.push(name.line)
+                    }
                 }
                 let t: Type = match t.tt {
                     TokenType::Int => Type::Int,
@@ -60,6 +69,7 @@ pub fn compile(stmts: Vec<Stmt>) -> Vec<OpCode> {
                     _ => panic!("dont tell me right paren is a variable type now :skullemoji:"),
                 };
                 code.push(OpCode::Store(name.lexeme, t));
+                lines.push(name.line)
             }
             Stmt::While { condition, block } => {}
             Stmt::For {
@@ -73,22 +83,23 @@ pub fn compile(stmts: Vec<Stmt>) -> Vec<OpCode> {
                 params,
                 body,
             } => {}
-            Stmt::Return(expr) => {
-                dump(&mut code, compile_expr(expr));
+            Stmt::Return(expr, line) => {
+                dump(&mut code, &mut lines, compile_expr(expr));
                 code.push(OpCode::Return);
+                lines.push(line)
             }
         }
     }
-    code
+    (code, lines)
 }
 
-pub fn compile_expr(expr: Expr) -> Vec<OpCode> {
+pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
     let mut code: Vec<OpCode> = Vec::new();
     let mut lines: Vec<usize> = Vec::new();
 
     match expr {
         Expr::Assign { name, value } => {
-            dump(&mut code, compile_expr(*value));
+            dump(&mut code, &mut lines, compile_expr(*value));
             code.push(OpCode::Store(name.lexeme, Type::Known));
             lines.push(name.line)
         }
@@ -97,13 +108,13 @@ pub fn compile_expr(expr: Expr) -> Vec<OpCode> {
             operator,
             right,
         } => {
-            dump(&mut code, compile_expr(*left));
-            dump(&mut code, compile_expr(*right));
+            dump(&mut code, &mut lines, compile_expr(*left));
+            dump(&mut code, &mut lines, compile_expr(*right));
             code.push(bin(operator.tt));
             lines.push(operator.line)
         }
         Expr::Call { callee, arguments } => {
-            let mut line = 0;
+            let line;
             code.push(OpCode::Call(match *callee {
                 Expr::Variable(t) => {
                     lines.push(t.line);
@@ -112,34 +123,43 @@ pub fn compile_expr(expr: Expr) -> Vec<OpCode> {
                 }
                 _ => unreachable!(),
             }));
+            lines.push(line);
             for arg_expr in arguments {
-                dump(&mut code, compile_expr(arg_expr));
+                dump(&mut code, &mut lines, compile_expr(arg_expr));
             }
             code.push(OpCode::Args);
             lines.push(line);
         }
-        Expr::Grouping(expression) => dump(&mut code, compile_expr(*expression)),
-        Expr::Literal(x) => code.push(OpCode::Constant(x)),
-        Expr::Range { min, max, step } => match step {
+        Expr::Grouping(expression) => dump(&mut code, &mut lines, compile_expr(*expression)),
+        Expr::Literal(x, line) => {
+            code.push(OpCode::Constant(x));
+            lines.push(line);
+        }
+        Expr::Range {
+            min,
+            max,
+            step,
+            line,
+        } => match step {
             Some(x) => {
                 code.push(OpCode::Range(true));
-                todo!("get line cuck");
-
-                dump(&mut code, compile_expr(*min));
-                dump(&mut code, compile_expr(*max));
-                dump(&mut code, compile_expr(*x));
+                lines.push(line);
+                dump(&mut code, &mut lines, compile_expr(*min));
+                dump(&mut code, &mut lines, compile_expr(*max));
+                dump(&mut code, &mut lines, compile_expr(*x));
             }
             None => {
                 code.push(OpCode::Range(false));
-                dump(&mut code, compile_expr(*min));
-                dump(&mut code, compile_expr(*max));
+                lines.push(line);
+                dump(&mut code, &mut lines, compile_expr(*min));
+                dump(&mut code, &mut lines, compile_expr(*max));
             }
         },
         Expr::Unary {
             operator,
             expression,
         } => {
-            dump(&mut code, compile_expr(*expression));
+            dump(&mut code, &mut lines, compile_expr(*expression));
             code.push(un(operator.tt));
             lines.push(operator.line);
         }
@@ -148,7 +168,7 @@ pub fn compile_expr(expr: Expr) -> Vec<OpCode> {
             lines.push(name.line)
         }
     }
-    code
+    (code, lines)
 }
 
 pub fn bin(operator: TokenType) -> OpCode {
@@ -177,8 +197,11 @@ pub fn un(operator: TokenType) -> OpCode {
     }
 }
 
-pub fn dump(main: &mut Vec<OpCode>, se: Vec<OpCode>) {
-    for i in se.into_iter() {
+pub fn dump(main: &mut Vec<OpCode>, lines: &mut Vec<usize>, se: (Vec<OpCode>, Vec<usize>)) {
+    for i in se.0.into_iter() {
         main.push(i);
+    }
+    for i in se.1.into_iter() {
+        lines.push(i);
     }
 }

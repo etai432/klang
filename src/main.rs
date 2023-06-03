@@ -66,7 +66,7 @@ fn main() {
         panic!("sex");
     }
 
-    if let Err(e) = fs::metadata(filename) {
+    if fs::metadata(filename).is_err() {
         KlangError::error(
             KlangError::RuntimeError,
             format!("File {filename} is not a file!").as_str(),
@@ -89,6 +89,6 @@ fn run_file(path: &str, relfilename: &str) {
     timeit!(compiler::Chunk::new(compiler::compile(ast)).disassemble());
 }
 
-fn compile_file(path: &str, relfilename: &str) {
-    //this function will compile the file to bytecode and save it in the same directory
-}
+// fn compile_file(path: &str, relfilename: &str) {
+//     //this function will compile the file to bytecode and save it in the same directory
+// }

@@ -36,7 +36,8 @@ impl<'a> Scanner<'a> {
                 '}' => self.make_token(TokenType::RightBrace, ch.to_string(), self.line, None),
                 ',' => self.make_token(TokenType::Comma, ch.to_string(), self.line, None),
                 '-' => {
-                    if self.tokens[self.tokens.len() - 1].tt == TokenType::Minus
+                    if self.tokens.len() >= 2
+                        && self.tokens[self.tokens.len() - 1].tt == TokenType::Minus
                         && self.tokens[self.tokens.len() - 2].tt != TokenType::Int
                         && self.tokens[self.tokens.len() - 2].tt != TokenType::Float
                     {

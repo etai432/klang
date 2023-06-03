@@ -16,7 +16,7 @@ pub enum Expr {
         arguments: Vec<Expr>,
     },
     Grouping(Box<Expr>), // "(" expression ")"
-    Literal(Value),
+    Literal(Value, usize),
 
     Unary {
         operator: Token,
@@ -27,5 +27,6 @@ pub enum Expr {
         min: Box<Expr>,
         max: Box<Expr>,
         step: Option<Box<Expr>>,
+        line: usize,
     }, // range
 }

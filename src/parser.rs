@@ -199,9 +199,9 @@ impl<'a> Parser<'a> {
     }
 
     fn return_stmt(&mut self) -> Stmt {
-        let cum = self.logical();
+        let value = self.logical();
         self.consume(TokenType::Semicolon, "missing ; at the end of lien");
-        Stmt::Return(cum)
+        Stmt::Return(value, self.previous().line)
     }
 
     fn for_stmt(&mut self) -> Stmt {
@@ -213,6 +213,7 @@ impl<'a> Parser<'a> {
                 min: _,
                 max: _,
                 step: _,
+                line: _,
             } => (),
             _ => self.error("\"in\" must be used on an iterable"),
         }
@@ -255,12 +256,13 @@ impl<'a> Parser<'a> {
 
     fn block(&mut self) -> Stmt {
         self.consume(TokenType::LeftBrace, "must start block with a {");
+        let start = self.previous().line;
         let mut statements: Vec<Stmt> = Vec::new();
         while !self.is_at_end() && !self.check(TokenType::RightBrace) {
             statements.push(self.declaration());
         }
         self.consume(TokenType::RightBrace, "must end block with a }");
-        Stmt::Block(statements)
+        Stmt::Block(statements, (start, self.previous().line))
     }
 
     fn print_stmt(&mut self) -> Stmt {
@@ -268,15 +270,18 @@ impl<'a> Parser<'a> {
             TokenType::LeftParen,
             "gotta put ( after a print yk how it is",
         );
-        let stmt = Stmt::Print(match self.primary() {
-            Expr::Literal(Value::String { string, printables }) => {
-                Value::String { string, printables }
-            }
-            _ => {
-                self.error("can only print strings");
-                panic!("balls")
-            }
-        });
+        let stmt = Stmt::Print(
+            match self.primary() {
+                Expr::Literal(Value::String { string, printables }, _) => {
+                    Value::String { string, printables }
+                }
+                _ => {
+                    self.error("can only print strings");
+                    panic!("balls")
+                }
+            },
+            self.peek().line,
+        );
         self.consume(
             TokenType::RightParen,
             "gotta put ) at the end of a print yk how it is",
@@ -385,7 +390,7 @@ impl<'a> Parser<'a> {
         let start = self.unary();
         if self.match_tokens(&[TokenType::Range]) {
             match &start {
-                Expr::Literal(Value::Int(_)) | Expr::Variable(_) => {}
+                Expr::Literal(Value::Int(_), _) | Expr::Variable(_) => {}
                 _ => {
                     self.error("you can only index a range using an integer");
                     panic!();
@@ -393,7 +398,7 @@ impl<'a> Parser<'a> {
             }
             let end = self.unary();
             match &end {
-                Expr::Literal(Value::Int(_)) | Expr::Variable(_) => {}
+                Expr::Literal(Value::Int(_), _) | Expr::Variable(_) => {}
                 _ => {
                     self.error("you can only index a range using an integer");
                     panic!();
@@ -402,7 +407,7 @@ impl<'a> Parser<'a> {
             if self.match_tokens(&[TokenType::Range]) {
                 let step = self.unary();
                 match &step {
-                    Expr::Literal(Value::Int(_)) | Expr::Variable(_) => {}
+                    Expr::Literal(Value::Int(_), _) | Expr::Variable(_) => {}
                     _ => {
                         self.error("you can only index a range using an integer");
                         panic!();
@@ -412,12 +417,14 @@ impl<'a> Parser<'a> {
                     min: Box::new(start),
                     max: Box::new(end),
                     step: Some(Box::new(step)),
+                    line: self.previous().line,
                 };
             }
             return Expr::Range {
                 min: Box::new(start),
                 max: Box::new(end),
                 step: None,
+                line: self.previous().line,
             };
         }
         start
@@ -463,9 +470,9 @@ impl<'a> Parser<'a> {
     fn primary(&mut self) -> Expr {
         if self.match_tokens(&[TokenType::Bool]) {
             if self.previous().lexeme == "true" {
-                return Expr::Literal(Value::Bool(true));
+                return Expr::Literal(Value::Bool(true), self.previous().line);
             } else {
-                return Expr::Literal(Value::Bool(false));
+                return Expr::Literal(Value::Bool(false), self.previous().line);
             }
         }
         if self.match_tokens(&[TokenType::String]) {
@@ -475,11 +482,11 @@ impl<'a> Parser<'a> {
                 printables.push(self.previous());
                 self.match_tokens(&[TokenType::Comma]);
             }
-            return Expr::Literal(Value::String { string, printables });
+            return Expr::Literal(Value::String { string, printables }, self.previous().line);
         }
 
         if self.match_tokens(&[TokenType::Int, TokenType::Float]) {
-            return Expr::Literal(self.previous().literal.unwrap());
+            return Expr::Literal(self.previous().literal.unwrap(), self.previous().line);
         }
         if self.match_tokens(&[TokenType::LeftParen]) {
             let expression = self.logical();

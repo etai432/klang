@@ -4,8 +4,8 @@ use crate::{
 };
 #[derive(Clone, Debug)]
 pub enum Stmt {
-    Print(Value),
-    Block(Vec<Stmt>),
+    Print(Value, usize),
+    Block(Vec<Stmt>, (usize, usize)),
     Expression(Expr),
     If {
         condition: Expr,
@@ -32,5 +32,5 @@ pub enum Stmt {
         params: Vec<(Token, Token)>,
         body: Box<Stmt>,
     },
-    Return(Expr),
+    Return(Expr, usize),
 }
