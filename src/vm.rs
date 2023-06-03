@@ -1,9 +1,14 @@
-use crate::compiler::{compile, Chunk};
+use crate::{
+    compiler::{compile, Chunk},
+    scanner::Value,
+};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct VM {
-    pub stack: Vec<f64>,
+    pub stack: Vec<Value>,
     pub chunk: Chunk,
+    pub callframe: HashMap<&'static str, Value>,
 }
 
 impl VM {
@@ -11,6 +16,7 @@ impl VM {
         VM {
             chunk,
             stack: Vec::new(),
+            callframe: HashMap::new(),
         }
     }
     pub fn interpret(&mut self, source: String) {

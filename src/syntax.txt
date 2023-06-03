@@ -23,6 +23,9 @@ if x > 1 {
 for i in 1..7..2 {
     x = i; // x = 1, 3, 5
 }
+while x > 2 {
+    x = -3;
+}
 // klang will use {} for scoping
 // I/O: klang will use print() for output and read() for input
 let y: string = read();

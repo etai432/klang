@@ -1,6 +1,6 @@
 use crate::{
     expr::*,
-    scanner::{Token, TokenType, Value},
+    scanner::{Token, Value},
 };
 #[derive(Clone, Debug)]
 pub enum Stmt {

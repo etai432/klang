@@ -462,6 +462,11 @@ pub enum Value {
     Float(f64),
     Bool(bool),
 }
+impl Default for Value {
+    fn default() -> Self {
+        Value::Int(0)
+    }
+}
 
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

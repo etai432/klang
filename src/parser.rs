@@ -19,8 +19,15 @@ impl<'a> Parser<'a> {
             filename,
         }
     }
-    pub fn parse(&mut self) -> Stmt {
-        self.expr_stmt()
+    // pub fn parse(&mut self) -> Vec<Stmt> {
+    //     let mut statements: Vec<Stmt> = Vec::new();
+    //     while !self.is_at_end() {
+    //         statements.push(self.declaration());
+    //     }
+    //     statements
+    // }
+    pub fn parse(&mut self) -> Expr {
+        self.logical()
     }
     fn declaration(&mut self) -> Stmt {
         if self.match_tokens(&[TokenType::Let]) {
@@ -179,7 +186,7 @@ impl<'a> Parser<'a> {
     fn statement(&mut self) -> Stmt {
         if self.match_tokens(&[TokenType::Print]) {
             self.print_stmt()
-        } else if self.match_tokens(&[TokenType::LeftBrace]) {
+        } else if self.check(TokenType::LeftBrace) {
             self.block()
         } else if self.match_tokens(&[TokenType::If]) {
             self.if_stmt()
@@ -197,7 +204,7 @@ impl<'a> Parser<'a> {
     fn return_stmt(&mut self) -> Stmt {
         let cum = self.logical();
         self.consume(TokenType::Semicolon, "missing ; at the end of lien");
-        return Stmt::Return(cum);
+        Stmt::Return(cum)
     }
 
     fn for_stmt(&mut self) -> Stmt {
@@ -214,11 +221,11 @@ impl<'a> Parser<'a> {
         }
 
         let block = Box::new(self.block());
-        return Stmt::For {
+        Stmt::For {
             identifier,
             iterable,
             block,
-        };
+        }
     }
 
     fn if_stmt(&mut self) -> Stmt {
@@ -232,25 +239,31 @@ impl<'a> Parser<'a> {
                 elseblock,
             };
         }
-        return Stmt::If {
+        Stmt::If {
             condition,
             block,
             elseblock: None,
-        };
+        }
     }
 
     fn while_stmt(&mut self) -> Stmt {
         let condition = self.logical();
         let block = self.block();
 
-        return Stmt::While {
+        Stmt::While {
             condition,
             block: Box::new(block),
-        };
+        }
     }
 
     fn block(&mut self) -> Stmt {
-        Stmt::Block(Vec::new())
+        self.consume(TokenType::LeftBrace, "must start block with a {");
+        let mut statements: Vec<Stmt> = Vec::new();
+        while !self.is_at_end() && !self.check(TokenType::RightBrace) {
+            statements.push(self.declaration());
+        }
+        self.consume(TokenType::RightBrace, "must end block with a }");
+        Stmt::Block(statements)
     }
 
     fn print_stmt(&mut self) -> Stmt {
@@ -458,12 +471,10 @@ impl<'a> Parser<'a> {
         if self.match_tokens(&[TokenType::String]) {
             let string = self.previous().lexeme;
             let mut printables: Vec<Token> = Vec::new();
-            println!("{:?}", self.previous());
             while self.match_tokens(&[TokenType::Printable]) {
                 printables.push(self.previous());
                 self.match_tokens(&[TokenType::Comma]);
             }
-            println!("{:?}", printables);
             return Expr::Literal(Value::String { string, printables });
         }
 
