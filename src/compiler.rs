@@ -69,7 +69,6 @@ pub fn compile(stmts: Vec<Stmt>) -> Vec<OpCode> {
                 params,
                 body,
             } => {}
-
             Stmt::Return(expr) => {
                 dump(&mut code, compile_expr(expr));
                 code.push(OpCode::Return);
