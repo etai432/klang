@@ -468,6 +468,22 @@ pub enum Value {
     None,
 }
 
+impl Value {
+    fn to_u8(&self) -> Vec<u8> {
+        let store: Vec<u8> = Vec::new();
+        match self {
+            Value::String {
+                string: _,
+                printables: _,
+            } => store.push(0),
+            Value::Int(_) => store.push(1),
+            Value::Float(_) => store.push(2),
+            Value::Bool(_) => store.push(3),
+            Value::None => store.push(4),
+        };
+    }
+}
+
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
