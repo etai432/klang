@@ -106,7 +106,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 code.push(OpCode::JumpIf(block_len + 1));
                 lines.push(line);
                 dump(&mut code, &mut lines, blok);
-                code.push(OpCode::Jump(block_len + con_len + 3));
+                code.push(OpCode::Jump(-(block_len + con_len + 3)));
                 lines.push(line);
             }
             Stmt::For {
@@ -128,7 +128,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 code.push(OpCode::JumpIf(block_len));
                 lines.push(line);
                 dump(&mut code, &mut lines, blok);
-                code.push(OpCode::Jump(block_len + range_len + 4));
+                code.push(OpCode::Jump(-(block_len + range_len + 4)));
                 lines.push(line);
             }
             Stmt::Fn {
