@@ -470,7 +470,7 @@ pub enum Value {
 
 impl Value {
     fn to_u8(&self) -> Vec<u8> {
-        let store: Vec<u8> = Vec::new();
+        let mut store: Vec<u8> = Vec::new();
         match self {
             Value::String {
                 string: _,
@@ -481,6 +481,7 @@ impl Value {
             Value::Bool(_) => store.push(3),
             Value::None => store.push(4),
         };
+        todo!()
     }
 }
 
