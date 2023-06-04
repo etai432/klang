@@ -152,6 +152,7 @@ fn save_u8(path: &str, bytecode: Vec<OpCode>) {
     let mut save_path = PathBuf::from(path);
     save_path.set_extension("klc");
     //turn the bytecode to Vec<u8>
+
     let mut file = File::create(save_path).expect("couldnt create file");
     // file.write_all(bytes);
 }
