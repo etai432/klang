@@ -3,6 +3,7 @@ use opcode::OpCode;
 use scanner::Token;
 use std::path::{Path, PathBuf};
 use std::{env, fs, fs::File};
+mod coder;
 mod compiler;
 mod error;
 mod expr;

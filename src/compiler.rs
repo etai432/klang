@@ -175,6 +175,8 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
             }
         }
     }
+    code.push(OpCode::Eof);
+    lines.push(0);
     (code, lines)
 }
 

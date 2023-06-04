@@ -1,7 +1,7 @@
 use crate::{scanner::Value, vm::Type};
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum OpCode {
     Constant(Value),     //Load a constant value onto the stack
     Store(String, Type), // Store the value from the top of the stack into the variable in the hashtable.
@@ -33,6 +33,82 @@ pub enum OpCode {
     Return,
     For,
     Fn(Type),
+    Eof,
+}
+
+impl OpCode {
+    fn to_u8(&self) -> u8 {
+        match self {
+            OpCode::Constant(constant) => 0x00,
+            OpCode::Store(name, r#type) => 0x01,
+            OpCode::Load(name) => 0x02,
+            OpCode::Add => 0x03,
+            OpCode::Subtract => 0x04,
+            OpCode::Multiply => 0x05,
+            OpCode::Divide => 0x06,
+            OpCode::EqualEqual => 0x07,
+            OpCode::NotEqual => 0x08,
+            OpCode::Less => 0x09,
+            OpCode::LessEqual => 0x10,
+            OpCode::Greater => 0x11,
+            OpCode::GreaterEqual => 0x12,
+            OpCode::LogicalAnd => 0x13,
+            OpCode::LogicalOr => 0x14,
+            OpCode::LogicalNot => 0x15,
+            OpCode::Negate => 0x16,
+            OpCode::Jump(x) => 0x17,
+            OpCode::JumpIf(x) => 0x18,
+            OpCode::Call(x) => 0x19,
+            OpCode::NativeCall(x) => 0x20,
+            OpCode::Print => 0x21,
+            OpCode::Args => 0x22,
+            OpCode::Range(x) => 0x23,
+            OpCode::Pop => 0x24,
+            OpCode::Scope => 0x25,
+            OpCode::EndScope => 0x26,
+            OpCode::Return => 0x27,
+            OpCode::For => 0x28,
+            OpCode::Fn(x) => 0x29,
+            OpCode::Eof => 0x30,
+        }
+    }
+
+    fn fromu8(byte: u8) -> OpCode {
+        match byte {
+            0x00 => OpCode::Constant(Value::Default),
+            0x01 => OpCode::Store,
+            0x02 => OpCode::Load,
+            0x03 => OpCode::Add,
+            0x04 => OpCode::Subtract,
+            0x05 => OpCode::Multiply,
+            0x06 => OpCode::Divide,
+            0x07 => OpCode::EqualEqual,
+            0x08 => OpCode::NotEqual,
+            0x09 => OpCode::Less,
+            0x10 => OpCode::LessEqual,
+            0x11 => OpCode::Greater,
+            0x12 => OpCode::GreaterEqual,
+            0x13 => OpCode::LogicalAnd,
+            0x14 => OpCode::LogicalOr,
+            0x15 => OpCode::LogicalNot,
+            0x16 => OpCode::Negate,
+            0x17 => OpCode::Jump,
+            0x18 => OpCode::JumpIf,
+            0x19 => OpCode::Call,
+            0x20 => OpCode::NativeCall,
+            0x21 => OpCode::Print,
+            0x22 => OpCode::Args,
+            0x23 => OpCode::Range,
+            0x24 => OpCode::Pop,
+            0x25 => OpCode::Scope,
+            0x26 => OpCode::EndScope,
+            0x27 => OpCode::Return,
+            0x28 => OpCode::For,
+            0x29 => OpCode::Fn,
+            0x30 => OpCode::Eof,
+            _ => panic!("sex"),
+        }
+    }
 }
 
 impl fmt::Display for OpCode {
@@ -68,6 +144,7 @@ impl fmt::Display for OpCode {
             OpCode::Return => write!(f, "Return"),
             OpCode::For => write!(f, "For"),
             OpCode::Fn(x) => write!(f, "Fn {:?}", x),
+            OpCode::Eof => write!(f, "Eof"),
         }
     }
 }
