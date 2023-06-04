@@ -228,19 +228,23 @@ impl<'a> Parser<'a> {
 
     fn if_stmt(&mut self) -> Stmt {
         let condition = self.logical();
+        let start = self.previous().line;
         let block = Box::new(self.block());
         if self.match_tokens(&[TokenType::Else]) {
+            let end = self.previous().line;
             let elseblock = Some(Box::new(self.block()));
             return Stmt::If {
                 condition,
                 block,
                 elseblock,
+                lines: (start, Some(end)),
             };
         }
         Stmt::If {
             condition,
             block,
             elseblock: None,
+            lines: (start, None),
         }
     }
 

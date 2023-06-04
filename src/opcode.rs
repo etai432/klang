@@ -20,11 +20,11 @@ pub enum OpCode {
     LogicalOr,    // Performs logical OR operation on the last two boolean values on the stack.
     LogicalNot,   // Negates the last boolean value on the stack.
     Negate,       // Negates the last numeric value on the stack.
-    Jump,         // Unconditionally jumps to a specified instruction address.
-    JumpIf, // Jumps to a specified instruction address if the last value on the stack is true.
+    Jump(i32),    // Unconditionally jumps to a specified instruction address.
+    JumpIf(i32), // Jumps to a specified instruction address if the last value on the stack is true.
     Call(String), // Calls a function at a specified instruction address.
     NativeCall(String), // Calls a native function or external function.
-    Print,  // Prints the last value on the stack to the console or output stream.
+    Print,       // Prints the last value on the stack to the console or output stream.
     Args,
     Range(bool),
     Pop,
@@ -53,8 +53,8 @@ impl fmt::Display for OpCode {
             OpCode::LogicalOr => write!(f, "LogicalOr"),
             OpCode::LogicalNot => write!(f, "LogicalNot"),
             OpCode::Negate => write!(f, "Negate"),
-            OpCode::Jump => write!(f, "Jump"),
-            OpCode::JumpIf => write!(f, "JumpIf"),
+            OpCode::Jump(x) => write!(f, "Jump {}", x),
+            OpCode::JumpIf(x) => write!(f, "JumpIf {}", x),
             OpCode::Call(x) => write!(f, "Call {}", x),
             OpCode::NativeCall(x) => write!(f, "NativeCall {}", x),
             OpCode::Print => write!(f, "Print"),

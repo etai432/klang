@@ -52,7 +52,26 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 condition,
                 block,
                 elseblock,
-            } => {}
+                lines: line,
+            } => {
+                dump(&mut code, &mut lines, compile_expr(condition));
+                code.push(OpCode::LogicalNot); //jump if false
+                lines.push(line.0);
+                let b_vec: Vec<Stmt> = vec![*block];
+                let blok = compile(b_vec);
+                code.push(OpCode::JumpIf(blok.0.len() as i32));
+                lines.push(line.0);
+                dump(&mut code, &mut lines, blok);
+                if elseblock.is_some() {
+                    code.push(OpCode::LogicalNot); //jump if false
+                    lines.push(line.1.unwrap());
+                    let b_vec: Vec<Stmt> = vec![*elseblock.unwrap()];
+                    let blok = compile(b_vec);
+                    code.push(OpCode::JumpIf(blok.0.len() as i32));
+                    lines.push(line.1.unwrap());
+                    dump(&mut code, &mut lines, blok);
+                }
+            }
             Stmt::Var { name, t, value } => {
                 match value {
                     Some(value) => dump(&mut code, &mut lines, compile_expr(value)),

@@ -11,6 +11,7 @@ pub enum Stmt {
         condition: Expr,
         block: Box<Stmt>,
         elseblock: Option<Box<Stmt>>,
+        lines: (usize, Option<usize>),
     },
     Var {
         name: Token,
