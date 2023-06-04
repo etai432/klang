@@ -460,7 +460,7 @@ impl fmt::Display for TokenType {
 pub enum Value {
     String {
         string: String,
-        printables: Vec<&'static str>,
+        printables: Vec<String>,
     },
     Int(i64),
     Float(f64),

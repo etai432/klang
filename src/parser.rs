@@ -492,9 +492,9 @@ impl<'a> Parser<'a> {
         }
         if self.match_tokens(&[TokenType::String]) {
             let string = self.previous().lexeme;
-            let mut printables: Vec<&'static str> = Vec::new();
+            let mut printables: Vec<String> = Vec::new();
             while self.match_tokens(&[TokenType::Printable]) {
-                printables.push(self.previous().lexeme.as_str());
+                printables.push(self.previous().lexeme);
                 self.match_tokens(&[TokenType::Comma]);
             }
             return Expr::Literal(Value::String { string, printables }, self.previous().line);
