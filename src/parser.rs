@@ -35,6 +35,13 @@ impl<'a> Parser<'a> {
             self.statement()
         }
     }
+    fn declaration_inner(&mut self) -> Stmt {
+        if self.match_tokens(&[TokenType::Let]) {
+            self.var_decl()
+        } else {
+            self.statement()
+        }
+    }
 
     fn fn_decl(&mut self) -> Stmt {
         if self.match_tokens(&[
@@ -206,6 +213,7 @@ impl<'a> Parser<'a> {
 
     fn for_stmt(&mut self) -> Stmt {
         let identifier = self.consume(TokenType::Identifier, "missing identifier 8=D");
+        let line = self.previous().line;
         self.consume(TokenType::In, "missing in");
         let iterable = self.range();
         match iterable {
@@ -223,6 +231,7 @@ impl<'a> Parser<'a> {
             identifier,
             iterable,
             block,
+            line,
         }
     }
 
@@ -250,11 +259,13 @@ impl<'a> Parser<'a> {
 
     fn while_stmt(&mut self) -> Stmt {
         let condition = self.logical();
+        let line = self.previous().line;
         let block = self.block();
 
         Stmt::While {
             condition,
             block: Box::new(block),
+            line,
         }
     }
 
@@ -263,7 +274,7 @@ impl<'a> Parser<'a> {
         let start = self.previous().line;
         let mut statements: Vec<Stmt> = Vec::new();
         while !self.is_at_end() && !self.check(TokenType::RightBrace) {
-            statements.push(self.declaration());
+            statements.push(self.declaration_inner());
         }
         self.consume(TokenType::RightBrace, "must end block with a }");
         Stmt::Block(statements, (start, self.previous().line))
@@ -272,7 +283,7 @@ impl<'a> Parser<'a> {
     fn print_stmt(&mut self) -> Stmt {
         self.consume(
             TokenType::LeftParen,
-            "gotta put ( after a print yk how it is",
+            "gotta put ( after a print yk how it is..",
         );
         let stmt = Stmt::Print(
             match self.primary() {
@@ -288,7 +299,7 @@ impl<'a> Parser<'a> {
         );
         self.consume(
             TokenType::RightParen,
-            "gotta put ) at the end of a print yk how it is",
+            "gotta put ) at the end of a print yk how it is..",
         );
         self.consume(TokenType::Semicolon, "missing ; at the end of the line");
         stmt

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use colored::*;
 #[derive(Debug)]
 pub enum KlangError {

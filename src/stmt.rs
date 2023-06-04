@@ -21,11 +21,13 @@ pub enum Stmt {
     While {
         condition: Expr,
         block: Box<Stmt>,
+        line: usize,
     },
     For {
         identifier: Token,
         iterable: Expr,
         block: Box<Stmt>,
+        line: usize,
     },
     Fn {
         return_t: Option<Token>,

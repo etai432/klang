@@ -1,28 +1,56 @@
 use crate::{
     compiler::{compile, Chunk},
     scanner::Value,
+    KlangError,
 };
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
-pub struct VM {
+pub struct VM<'a> {
     pub stack: Vec<Value>,
     pub chunk: Chunk,
-    pub callframe: HashMap<&'static str, (Value, Type)>,
+    pub global: Scope,
+    pub index: usize,
+    pub filename: &'a str,
 }
 
-impl VM {
-    pub fn new(chunk: Chunk) -> VM {
+impl<'a> VM<'a> {
+    pub fn new(chunk: Chunk, filename: &'a str) -> VM<'a> {
         VM {
             chunk,
             stack: Vec::new(),
-            callframe: HashMap::new(),
+            global: Scope::new(),
+            index: 0,
+            filename,
         }
     }
-    pub fn interpret(&mut self, source: String) {
-        self.run();
+    pub fn run(&mut self) {
+        //executes the code on the chunk
     }
-    pub fn run(&mut self) {}
+    fn get_var(&self) {
+        //gets a variable from the most inner scope, if its not there searches on the outer scopes
+    }
+    fn set_var(&mut self) {
+        //sets a variable in the most inner scope
+    }
+    fn error(&self, msg: &str) {
+        KlangError::error(
+            KlangError::RuntimeError,
+            msg,
+            self.chunk.lines[self.index] as usize,
+            self.filename,
+        );
+    }
+    fn pop2(&mut self) -> (Value, Value) {
+        (self.pop(), self.pop())
+    }
+    fn pop(&mut self) -> Value {
+        if self.stack.is_empty() {
+            self.error("stack overflow (cant pop an empty stack)");
+            panic!()
+        }
+        self.stack.pop().unwrap()
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -31,5 +59,19 @@ pub enum Type {
     Float,
     String,
     Bool,
-    Known,
+    None,
+}
+
+#[derive(Debug, Clone)]
+pub struct Scope {
+    pub callframe: HashMap<&'static str, (Value, Type)>,
+    pub inner: Option<Box<Scope>>,
+}
+impl Scope {
+    pub fn new() -> Self {
+        Self {
+            callframe: HashMap::new(),
+            inner: None,
+        }
+    }
 }

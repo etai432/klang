@@ -31,13 +31,15 @@ pub enum OpCode {
     Scope,
     EndScope,
     Return,
+    For,
+    Fn(Type),
 }
 
 impl fmt::Display for OpCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             OpCode::Constant(constant) => write!(f, "Constant {}", constant),
-            OpCode::Store(name, Type) => write!(f, "Store {} {:?}", name, Type),
+            OpCode::Store(name, r#type) => write!(f, "Store {} {:?}", name, r#type),
             OpCode::Load(name) => write!(f, "Load {}", name),
             OpCode::Add => write!(f, "Add"),
             OpCode::Subtract => write!(f, "Subtract"),
@@ -64,6 +66,8 @@ impl fmt::Display for OpCode {
             OpCode::Scope => write!(f, "Scope"),
             OpCode::EndScope => write!(f, "EndScope"),
             OpCode::Return => write!(f, "Return"),
+            OpCode::For => write!(f, "For"),
+            OpCode::Fn(x) => write!(f, "Fn {:?}", x),
         }
     }
 }

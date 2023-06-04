@@ -1,5 +1,4 @@
-if true {
-    print("hi");
-} else {
-    i = 2;
+let int1 = 2;
+fn wassap(int1: int, int2: float) {
+    print("{int1}");
 }

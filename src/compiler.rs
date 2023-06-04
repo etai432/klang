@@ -63,7 +63,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 lines.push(line.0);
                 dump(&mut code, &mut lines, blok);
                 if elseblock.is_some() {
-                    code.push(OpCode::LogicalNot); //jump if false
+                    code.push(OpCode::LogicalNot); //jump if true
                     lines.push(line.1.unwrap());
                     let b_vec: Vec<Stmt> = vec![*elseblock.unwrap()];
                     let blok = compile(b_vec);
@@ -90,18 +90,84 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 code.push(OpCode::Store(name.lexeme, t));
                 lines.push(name.line)
             }
-            Stmt::While { condition, block } => {}
+            Stmt::While {
+                condition,
+                block,
+                line,
+            } => {
+                let condition = compile_expr(condition);
+                let con_len = condition.0.len() as i32;
+                dump(&mut code, &mut lines, condition);
+                code.push(OpCode::LogicalNot); //jump if false
+                lines.push(line);
+                let b_vec: Vec<Stmt> = vec![*block];
+                let blok = compile(b_vec);
+                let block_len = blok.0.len() as i32;
+                code.push(OpCode::JumpIf(block_len + 1));
+                lines.push(line);
+                dump(&mut code, &mut lines, blok);
+                code.push(OpCode::Jump(block_len + con_len + 3));
+                lines.push(line);
+            }
             Stmt::For {
                 identifier,
                 iterable,
                 block,
-            } => {}
+                line,
+            } => {
+                code.push(OpCode::For);
+                lines.push(line);
+                let range = compile_expr(iterable);
+                let range_len = range.0.len() as i32;
+                dump(&mut code, &mut lines, range);
+                code.push(OpCode::Store(identifier.lexeme, Type::None));
+                lines.push(line);
+                let b_vec: Vec<Stmt> = vec![*block];
+                let blok = compile(b_vec);
+                let block_len = blok.0.len() as i32;
+                code.push(OpCode::JumpIf(block_len));
+                lines.push(line);
+                dump(&mut code, &mut lines, blok);
+                code.push(OpCode::Jump(block_len + range_len + 4));
+                lines.push(line);
+            }
             Stmt::Fn {
                 return_t,
                 name,
                 params,
                 body,
-            } => {}
+            } => {
+                code.push(OpCode::Fn(match return_t {
+                    None => Type::None,
+                    Some(x) => match x.tt {
+                        TokenType::Int => Type::Int,
+                        TokenType::Float => Type::Float,
+                        TokenType::String => Type::String,
+                        TokenType::Bool => Type::Bool,
+                        _ => panic!("if you got here.. ksang has big.. NO HUGE problemo in code"),
+                    },
+                }));
+                lines.push(name.line);
+                for i in params {
+                    code.push(OpCode::Store(
+                        i.0.lexeme,
+                        match i.1.tt {
+                            TokenType::Int => Type::Int,
+                            TokenType::Float => Type::Float,
+                            TokenType::String => Type::String,
+                            TokenType::Bool => Type::Bool,
+                            _ => unreachable!(),
+                        },
+                    ));
+                    lines.push(name.line);
+                }
+                let b_vec: Vec<Stmt> = vec![*body];
+                dump(&mut code, &mut lines, compile(b_vec));
+                code.push(OpCode::Fn(Type::None));
+                lines.push(name.line);
+                code.push(OpCode::Store(name.lexeme, Type::None));
+                lines.push(name.line);
+            }
             Stmt::Return(expr, line) => {
                 dump(&mut code, &mut lines, compile_expr(expr));
                 code.push(OpCode::Return);
@@ -119,7 +185,7 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
     match expr {
         Expr::Assign { name, value } => {
             dump(&mut code, &mut lines, compile_expr(*value));
-            code.push(OpCode::Store(name.lexeme, Type::Known));
+            code.push(OpCode::Store(name.lexeme, Type::None));
             lines.push(name.line)
         }
         Expr::Binary {

@@ -1,15 +1,16 @@
-use std::{env, fs};
+use error::KlangError;
+use opcode::OpCode;
+use scanner::Token;
+use std::path::{Path, PathBuf};
+use std::{env, fs, fs::File};
+mod compiler;
 mod error;
 mod expr;
+mod opcode;
 mod parser;
 mod scanner;
-use error::KlangError;
-use scanner::Token;
-mod compiler;
-mod opcode;
 mod stmt;
 mod vm;
-use std::path::Path;
 
 macro_rules! timeit {
     ($($todo: stmt), *) => {
@@ -49,33 +50,78 @@ macro_rules! timeit {
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("Error: expected file path");
+        eprintln!("Error: expected file path | use -c at the end to compile");
         std::process::exit(1);
     }
     let filename = &args[1];
-
     let path = Path::new(&filename);
     let relfilename = path.file_name().unwrap().to_str().unwrap();
-    if !filename.ends_with(".klang") {
-        KlangError::error(
-            KlangError::RuntimeError,
-            "file must have a \".klang\" extension!",
-            0,
-            relfilename,
-        );
-        panic!("sex");
+    //run
+    if args.len() == 2 {
+        if !filename.ends_with(".klang") {
+            KlangError::error(
+                KlangError::RuntimeError,
+                "file must have a \".klang\" extension!",
+                0,
+                relfilename,
+            );
+            panic!("sex");
+        }
+        if fs::metadata(filename).is_err() {
+            KlangError::error(
+                KlangError::RuntimeError,
+                format!("File {filename} is not a file!").as_str(),
+                0,
+                relfilename,
+            );
+            std::process::exit(1);
+        } else {
+            run_file(filename, relfilename);
+        }
     }
-
-    if fs::metadata(filename).is_err() {
-        KlangError::error(
-            KlangError::RuntimeError,
-            format!("File {filename} is not a file!").as_str(),
-            0,
-            relfilename,
-        );
-        std::process::exit(1);
-    } else {
-        run_file(filename, relfilename);
+    //compile | run
+    if args.len() == 3 {
+        if fs::metadata(filename).is_err() {
+            KlangError::error(
+                KlangError::RuntimeError,
+                format!("File {filename} is not a file!").as_str(),
+                0,
+                relfilename,
+            );
+            std::process::exit(1);
+        }
+        if args[2] == "-c" {
+            if filename.ends_with(".klang") {
+                compile_file(filename, relfilename);
+            } else {
+                KlangError::error(
+                    KlangError::RuntimeError,
+                    "file must have a \".klang\" extension!",
+                    0,
+                    relfilename,
+                );
+                panic!("sex");
+            }
+        } else if args[2] == "-r" {
+            if filename.ends_with(".klc") {
+                run_compiled(filename, relfilename);
+            } else {
+                KlangError::error(
+                    KlangError::RuntimeError,
+                    "file must have a \".klc\" extension!",
+                    0,
+                    relfilename,
+                );
+                panic!("sex");
+            }
+        } else {
+            KlangError::error(
+                KlangError::RuntimeError,
+                "use cargo run path -c | -r to compile | run",
+                0,
+                relfilename,
+            );
+        }
     }
 }
 
@@ -86,9 +132,31 @@ fn run_file(path: &str, relfilename: &str) {
     let mut parser = parser::Parser::new(tokens, relfilename);
     let ast = parser.parse();
     println!("{:?}\n", ast);
-    timeit!(compiler::Chunk::new(compiler::compile(ast)).disassemble());
+    let chunk = compiler::Chunk::new(compiler::compile(ast));
+    timeit!(chunk.disassemble());
+    let mut vm = vm::VM::new(chunk, relfilename);
+    vm.run();
 }
 
-// fn compile_file(path: &str, relfilename: &str) {
-//     //this function will compile the file to bytecode and save it in the same directory
-// }
+fn compile_file(path: &str, relfilename: &str) {
+    let source = fs::read_to_string(path).expect("failed to read file");
+    let mut scanner = scanner::Scanner::new(&source, relfilename);
+    let tokens: Vec<Token> = scanner.scan_tokens();
+    let mut parser = parser::Parser::new(tokens, relfilename);
+    let ast = parser.parse();
+    let chunk = compiler::Chunk::new(compiler::compile(ast));
+    save_u8(path, chunk.code)
+}
+
+fn save_u8(path: &str, bytecode: Vec<OpCode>) {
+    let mut save_path = PathBuf::from(path);
+    save_path.set_extension("klc");
+    //turn the bytecode to Vec<u8>
+    let mut file = File::create(save_path).expect("couldnt create file");
+    // file.write_all(bytes);
+}
+
+fn run_compiled(path: &str, relfilename: &str) {
+    println!("running compiled {}", path);
+    //decode and run
+}
