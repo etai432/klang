@@ -27,7 +27,6 @@ pub enum OpCode {
     Print,       // Prints the last value on the stack to the console or output stream.
     Args,
     Range(bool),
-    Pop,
     Scope,
     EndScope,
     Return,
@@ -138,7 +137,6 @@ impl fmt::Display for OpCode {
             OpCode::Print => write!(f, "Print"),
             OpCode::Args => write!(f, "Args"),
             OpCode::Range(x) => write!(f, "Range {}", x),
-            OpCode::Pop => write!(f, "Poop"),
             OpCode::Scope => write!(f, "Scope"),
             OpCode::EndScope => write!(f, "EndScope"),
             OpCode::Return => write!(f, "Return"),

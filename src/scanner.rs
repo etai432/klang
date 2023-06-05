@@ -1,4 +1,5 @@
 #![allow(unused)]
+use crate::expr::Expr;
 use crate::{error, KlangError};
 use std::collections::HashMap;
 use std::fmt;
@@ -73,7 +74,9 @@ impl<'a> Scanner<'a> {
                             None,
                         );
                     } else {
-                        if self.tokens[self.tokens.len() - 1].tt == TokenType::Bang {
+                        if self.tokens.len() >= 1
+                            && self.tokens[self.tokens.len() - 1].tt == TokenType::Bang
+                        {
                             error::KlangError::error(
                                 KlangError::ScannerError,
                                 "we shall not allow bang spamming. use 1 bitch",
@@ -338,10 +341,9 @@ impl<'a> Scanner<'a> {
                             );
                             self.had_error = true;
                         }
-                        while self.chars.peek().unwrap_or(&'\0').is_ascii_alphanumeric() {
+                        while self.chars.peek().is_some() {
                             let ch1 = self.chars.next().unwrap();
                             string1.push(ch1);
-                            string.push(ch1);
                             if self.chars.peek() == Some(&'}') {
                                 printables.push(Token {
                                     tt: TokenType::Printable,
@@ -456,11 +458,11 @@ impl fmt::Display for TokenType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Value {
     String {
         string: String,
-        printables: Vec<String>,
+        printables: Vec<Expr>,
     },
     Int(i64),
     Float(f64),
@@ -497,7 +499,7 @@ impl fmt::Display for Value {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub tt: TokenType,
     pub lexeme: String,

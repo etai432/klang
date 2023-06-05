@@ -2,6 +2,7 @@ use error::KlangError;
 use opcode::OpCode;
 use scanner::Token;
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 use std::{env, fs, fs::File};
 mod compiler;
 mod error;
@@ -14,7 +15,6 @@ mod vm;
 
 macro_rules! timeit {
     ($($todo: stmt), *) => {
-        use std::time::SystemTime;
         let start = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
         $(
             $todo
@@ -129,13 +129,14 @@ fn run_file(path: &str, relfilename: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
     let tokens: Vec<Token> = scanner.scan_tokens();
+    println!("{:?}", tokens);
     let mut parser = parser::Parser::new(tokens, relfilename);
     let ast = parser.parse();
     println!("{:?}\n", ast);
     let chunk = compiler::Chunk::new(compiler::compile(ast));
     timeit!(chunk.disassemble());
     let mut vm = vm::VM::new(chunk, relfilename);
-    vm.run();
+    timeit!(vm.run());
 }
 
 fn compile_file(path: &str, relfilename: &str) {

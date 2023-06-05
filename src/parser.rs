@@ -3,6 +3,7 @@ use std::io::BufRead;
 
 use crate::error::KlangError;
 use crate::expr::Expr;
+use crate::scanner::Scanner;
 use crate::scanner::{Token, TokenType, Value};
 use crate::stmt::Stmt;
 
@@ -492,10 +493,19 @@ impl<'a> Parser<'a> {
         }
         if self.match_tokens(&[TokenType::String]) {
             let string = self.previous().lexeme;
-            let mut printables: Vec<String> = Vec::new();
+            let mut printables_t: Vec<Vec<Token>> = Vec::new();
             while self.match_tokens(&[TokenType::Printable]) {
-                printables.push(self.previous().lexeme);
+                let lexeme = self.previous().lexeme;
+                let mut s = Scanner::new(&lexeme, self.filename);
+                let mut s1 = s.scan_tokens();
+                s1.pop();
+                printables_t.push(s1);
                 self.match_tokens(&[TokenType::Comma]);
+            }
+            let mut printables: Vec<Expr> = Vec::new();
+            for i in printables_t {
+                self.tokens.splice(self.current..self.current, i);
+                printables.push(self.logical());
             }
             return Expr::Literal(Value::String { string, printables }, self.previous().line);
         }

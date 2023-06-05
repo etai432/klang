@@ -32,18 +32,32 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
     let mut lines: Vec<usize> = Vec::new();
     for stmt in stmts {
         match stmt {
-            Stmt::Print(val, line) => {
-                code.push(OpCode::Constant(val));
-                lines.push(line);
+            Stmt::Print(x, line) => {
+                match x {
+                    Value::String { string, printables } => {
+                        for i in printables {
+                            dump(&mut code, &mut lines, compile_expr(i))
+                        }
+                        code.push(OpCode::Constant(Value::String {
+                            string,
+                            printables: Vec::new(),
+                        }));
+                        lines.push(line);
+                    }
+                    _ => {
+                        code.push(OpCode::Constant(x));
+                        lines.push(line);
+                    }
+                };
                 code.push(OpCode::Print);
-                lines.push(line);
-                code.push(OpCode::Pop);
                 lines.push(line);
             }
             Stmt::Block(stmts, (start, end)) => {
                 code.push(OpCode::Scope);
                 lines.push(start);
                 dump(&mut code, &mut lines, compile(stmts));
+                code.pop();
+                lines.pop();
                 code.push(OpCode::EndScope);
                 lines.push(end);
             }
@@ -59,17 +73,21 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 lines.push(line.0);
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
-                code.push(OpCode::JumpIf(blok.0.len() as i32));
+                code.push(OpCode::JumpIf(blok.0.len() as i32 - 1));
                 lines.push(line.0);
                 dump(&mut code, &mut lines, blok);
+                code.pop();
+                lines.pop();
                 if elseblock.is_some() {
                     code.push(OpCode::LogicalNot); //jump if true
                     lines.push(line.1.unwrap());
                     let b_vec: Vec<Stmt> = vec![*elseblock.unwrap()];
                     let blok = compile(b_vec);
-                    code.push(OpCode::JumpIf(blok.0.len() as i32));
+                    code.push(OpCode::JumpIf(blok.0.len() as i32 - 1));
                     lines.push(line.1.unwrap());
                     dump(&mut code, &mut lines, blok);
+                    code.pop();
+                    lines.pop();
                 }
             }
             Stmt::Var { name, t, value } => {
@@ -103,10 +121,14 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
                 let block_len = blok.0.len() as i32;
-                code.push(OpCode::JumpIf(block_len + 1));
+                code.push(OpCode::JumpIf(block_len - 1));
                 lines.push(line);
                 dump(&mut code, &mut lines, blok);
-                code.push(OpCode::Jump(-(block_len + con_len + 3)));
+                code.pop();
+                lines.pop();
+                code.pop();
+                lines.pop();
+                code.push(OpCode::Jump(-(block_len + con_len + 1)));
                 lines.push(line);
             }
             Stmt::For {
@@ -128,6 +150,8 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 code.push(OpCode::JumpIf(block_len));
                 lines.push(line);
                 dump(&mut code, &mut lines, blok);
+                code.pop();
+                lines.pop();
                 code.push(OpCode::Jump(-(block_len + range_len + 4)));
                 lines.push(line);
             }
@@ -163,6 +187,8 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 }
                 let b_vec: Vec<Stmt> = vec![*body];
                 dump(&mut code, &mut lines, compile(b_vec));
+                code.pop();
+                lines.pop();
                 code.push(OpCode::Fn(Type::None));
                 lines.push(name.line);
                 code.push(OpCode::Store(name.lexeme, Type::None));
@@ -218,10 +244,22 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
             lines.push(line);
         }
         Expr::Grouping(expression) => dump(&mut code, &mut lines, compile_expr(*expression)),
-        Expr::Literal(x, line) => {
-            code.push(OpCode::Constant(x));
-            lines.push(line);
-        }
+        Expr::Literal(x, line) => match x {
+            Value::String { string, printables } => {
+                for i in printables {
+                    dump(&mut code, &mut lines, compile_expr(i))
+                }
+                code.push(OpCode::Constant(Value::String {
+                    string,
+                    printables: Vec::new(),
+                }));
+                lines.push(line);
+            }
+            _ => {
+                code.push(OpCode::Constant(x));
+                lines.push(line);
+            }
+        },
         Expr::Range {
             min,
             max,
