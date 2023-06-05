@@ -133,7 +133,6 @@ impl<'a> VM<'a> {
             }
             OpCode::Call(x, y) => {
                 index += self.call(x, y, depth + 1);
-                self.close_inner();
                 println!("{:?}", self.global);
             }
             OpCode::NativeCall(x) => self.native_call(x),
@@ -320,8 +319,8 @@ impl<'a> VM<'a> {
                 }
             },
             TokenType::Minus => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Int(x - y),
-                (Value::Float(x), Value::Float(y)) => Value::Float(x - y),
+                (Value::Int(x), Value::Int(y)) => Value::Int(y - x),
+                (Value::Float(x), Value::Float(y)) => Value::Float(y - x),
                 _ => {
                     self.error("can only subtract ints and floats");
                     panic!()
@@ -337,18 +336,18 @@ impl<'a> VM<'a> {
             },
             TokenType::Slash => match pop2 {
                 (Value::Int(x), Value::Int(y)) => {
-                    if y == 0 {
+                    if x == 0 {
                         self.error("division by zero");
                         panic!()
                     }
-                    Value::Int(x / y)
+                    Value::Int(y / x)
                 }
                 (Value::Float(x), Value::Float(y)) => {
                     if x == 0.0 {
                         self.error("division by zero");
                         panic!()
                     }
-                    Value::Float(x / y)
+                    Value::Float(y / x)
                 }
                 _ => {
                     self.error("can only divide ints and floats");
@@ -456,8 +455,8 @@ impl<'a> VM<'a> {
             let opcode = self.chunk.code[index as usize].clone();
             index = self.execute_single(&opcode, index, depth) + 1;
             counter += 1;
+            println!("{:?} {:?}", self.chunk.code[index as usize], self.global);
         }
-        self.create_inner();
         let fun = match self.functions.remove(&callee) {
             Some(x) => x,
             None => {
@@ -465,8 +464,9 @@ impl<'a> VM<'a> {
                 panic!()
             }
         };
+        self.create_inner();
         self.functions.insert(callee, fun.clone());
-        for i in fun.2 {
+        for i in fun.2.into_iter().rev() {
             let mut scope = &mut self.global;
             for _ in 0..depth {
                 scope = scope.inner.as_mut().unwrap();
@@ -490,11 +490,10 @@ impl<'a> VM<'a> {
                     scope = scope.inner.as_mut().unwrap();
                 }
                 scope.stack.push(val);
-                println!("{:?}", self.global);
                 return counter;
             }
             i += self.execute_single(&fun.1[i as usize], index, depth) - index + 1;
-            println!("{} {:?}", depth, fun.1[i as usize]);
+            println!("{} {:?} {:?}", depth, fun.1[i as usize], self.global);
         }
         self.close_inner();
         counter
