@@ -1,3 +1,4 @@
+#![allow(clippy::enum_variant_names)]
 use colored::*;
 #[derive(Debug)]
 pub enum KlangError {

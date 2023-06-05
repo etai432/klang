@@ -19,7 +19,7 @@ impl Chunk {
     }
     pub fn disassemble(&self) {
         for (num, instruction) in self.code.iter().enumerate() {
-            println!("{:02} {:04} {}", self.lines[num], num, instruction);
+            println!("{:04} {}", num, instruction);
         }
     }
     // pub fn disassemble_byte(&self, num: usize) {
@@ -189,8 +189,6 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 dump(&mut code, &mut lines, compile(b_vec));
                 code.pop();
                 lines.pop();
-                code.push(OpCode::Fn(Type::None));
-                lines.push(name.line);
                 code.push(OpCode::Store(name.lexeme, Type::None));
                 lines.push(name.line);
             }
@@ -203,6 +201,13 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
     }
     code.push(OpCode::Eof);
     lines.push(0);
+    for (i, op) in code.clone().into_iter().enumerate() {
+        if matches!(op, OpCode::Call(_, _)) {
+            if let OpCode::Call(x, _) = &code[i] {
+                code[i] = OpCode::Call(x.clone(), i as i32);
+            }
+        }
+    }
     (code, lines)
 }
 
@@ -228,14 +233,17 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
         }
         Expr::Call { callee, arguments } => {
             let line;
-            code.push(OpCode::Call(match *callee {
-                Expr::Variable(t) => {
-                    lines.push(t.line);
-                    line = t.line;
-                    t.lexeme
-                }
-                _ => unreachable!(),
-            }));
+            code.push(OpCode::Call(
+                match *callee {
+                    Expr::Variable(t) => {
+                        lines.push(t.line);
+                        line = t.line;
+                        t.lexeme
+                    }
+                    _ => unreachable!(),
+                },
+                0,
+            ));
             lines.push(line);
             for arg_expr in arguments {
                 dump(&mut code, &mut lines, compile_expr(arg_expr));

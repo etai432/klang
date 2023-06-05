@@ -5,13 +5,14 @@ use crate::{
     KlangError,
 };
 use std::collections::HashMap;
-
+pub type Function = (Type, Vec<OpCode>, Vec<(String, Type)>);
 #[derive(Debug, Clone)]
 pub struct VM<'a> {
     pub chunk: Chunk,
     pub global: Scope,
     pub index: i32,
     pub filename: &'a str,
+    pub functions: HashMap<String, Function>,
 }
 
 impl<'a> VM<'a> {
@@ -21,6 +22,7 @@ impl<'a> VM<'a> {
             global: Scope::new(),
             index: 0,
             filename,
+            functions: HashMap::new(),
         }
     }
     pub fn run(&mut self) {
@@ -69,7 +71,9 @@ impl<'a> VM<'a> {
                         self.index += x;
                     }
                 }
-                OpCode::Call(x) => self.call(x),
+                OpCode::Call(x, y) => {
+                    self.index += self.call(x, y, 0);
+                }
                 OpCode::NativeCall(x) => self.native_call(x),
                 OpCode::Print => self.print(),
                 OpCode::Args => self.error("args can only appear in the call function"),
@@ -80,25 +84,128 @@ impl<'a> VM<'a> {
                 OpCode::For => self.for_loop(),
                 OpCode::Fn(t) => self.function(t),
                 OpCode::Eof => {}
-                _ => {}
             }
             self.index += 1;
         }
     }
-    fn function(&mut self, t: Type) {}
-    fn range(&mut self, cstep: bool) {
-        //push to stack the values? ngl i have no idea :D
+    fn execute_single(&mut self, opcode: &OpCode, mut index: i32, depth: i32) -> i32 {
+        //executes the code on the chunk
+        match opcode.clone() {
+            OpCode::Constant(x) => self.push(x),
+            OpCode::Store(x, y) => self.set_var(x, y),
+            OpCode::Load(x) => {
+                let var = match VM::get_var(&x, &mut self.global).0 {
+                    Some(x) => x,
+                    None => {
+                        self.error(format!("variable \"{x}\" do not exist").as_str());
+                        panic!()
+                    }
+                };
+                self.push(var);
+            }
+            OpCode::Add => self.bin_op(TokenType::Plus),
+            OpCode::Subtract => self.bin_op(TokenType::Minus),
+            OpCode::Multiply => self.bin_op(TokenType::Star),
+            OpCode::Divide => self.bin_op(TokenType::Slash),
+            OpCode::EqualEqual => self.bin_op(TokenType::EqualEqual),
+            OpCode::NotEqual => self.bin_op(TokenType::BangEqual),
+            OpCode::Less => self.bin_op(TokenType::Less),
+            OpCode::LessEqual => self.bin_op(TokenType::LessEqual),
+            OpCode::Greater => self.bin_op(TokenType::Greater),
+            OpCode::GreaterEqual => self.bin_op(TokenType::GreaterEqual),
+            OpCode::LogicalAnd => self.bin_op(TokenType::And),
+            OpCode::LogicalOr => self.bin_op(TokenType::Or),
+            OpCode::LogicalNot => self.un_op(TokenType::Bang),
+            OpCode::Negate => self.un_op(TokenType::Minus),
+            OpCode::Jump(x) => {
+                if index + x > self.chunk.code.len() as i32 {
+                    self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
+                }
+                index += x;
+            }
+            OpCode::JumpIf(x) => {
+                if let Value::Bool(true) = self.top() {
+                    if index + x > self.chunk.code.len() as i32 {
+                        self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
+                    }
+                    index += x;
+                }
+            }
+            OpCode::Call(x, y) => {
+                index += self.call(x, y, depth + 1);
+                self.close_inner();
+                println!("{:?}", self.global);
+            }
+            OpCode::NativeCall(x) => self.native_call(x),
+            OpCode::Print => self.print(),
+            OpCode::Args => self.error("args can only appear in the call function"),
+            OpCode::Range(x) => self.range(x),
+            OpCode::Scope => self.create_inner(),
+            OpCode::EndScope => self.close_inner(),
+            OpCode::Return => self.error("return can only appear inside functions"),
+            OpCode::For => self.for_loop(),
+            OpCode::Fn(t) => self.function(t),
+            OpCode::Eof => {}
+        };
+        index
     }
-    fn for_loop(&mut self) {}
+    fn function(&mut self, t: Type) {
+        self.index += 1; //consume fn
+        let mut args: Vec<(String, Type)> = Vec::new();
+        while match self.chunk.code[self.index as usize].clone() {
+            OpCode::Store(x, y) => {
+                args.push((x, y));
+                true
+            }
+            _ => false,
+        } {
+            self.index += 1; //consume arg
+        }
+        let mut bytes: Vec<OpCode> = Vec::new();
+        self.index += 1;
+        let mut counter = 1;
+        while counter != 0 {
+            bytes.push(self.chunk.code[self.index as usize].clone());
+            self.index += 1;
+            if matches!(self.chunk.code[self.index as usize], OpCode::EndScope) {
+                counter -= 1;
+            }
+            if matches!(self.chunk.code[self.index as usize], OpCode::Scope) {
+                counter += 1;
+            }
+        }
+        self.index += 1;
+        match self.chunk.code[self.index as usize].clone() {
+            OpCode::Store(x, _) => self.functions.insert(x, (t, bytes, args)),
+            _ => {
+                self.error("ksang made a little oopsy");
+                panic!();
+            }
+        };
+    }
+    fn range(&mut self, cstep: bool) {
+        //push to stack the amount of values and then the values? ngl i have no idea :D but who tf uses range without a for?
+    }
+    fn for_loop(&mut self) {
+        //opcodes list:
+        //starts with for opcode
+        //then calls self.range() to evaluate the iterable
+        //Store(iden)
+        //jumpif
+        //block
+        //jump
+    }
     fn print(&mut self) {
         let mut print = match self.pop() {
             Value::String {
                 string,
                 printables: _,
             } => string,
-            _ => panic!(),
+            _ => {
+                panic!()
+            }
         };
-        for i in 0..self.count_braces(print.as_str()) {
+        for _ in 0..self.count_braces(print.as_str()) {
             let repl = match self.pop() {
                 Value::String {
                     string,
@@ -170,6 +277,14 @@ impl<'a> VM<'a> {
             .callframe
             .insert(name, (scope.stack.pop().unwrap(), r#type));
     }
+    fn set_var_(&mut self, name: String, r#type: Type, val: Value) {
+        //sets a variable in the most inner scope, to the top value of the stack
+        let mut scope: &mut Scope = &mut self.global;
+        while scope.inner.is_some() {
+            scope = scope.inner.as_mut().unwrap();
+        }
+        scope.callframe.insert(name, (val, r#type));
+    }
     fn create_inner(&mut self) {
         let mut scope: &mut Scope = &mut self.global;
         while scope.inner.is_some() {
@@ -229,7 +344,7 @@ impl<'a> VM<'a> {
                     Value::Int(x / y)
                 }
                 (Value::Float(x), Value::Float(y)) => {
-                    if y == 0.0 {
+                    if x == 0.0 {
                         self.error("division by zero");
                         panic!()
                     }
@@ -316,7 +431,6 @@ impl<'a> VM<'a> {
             TokenType::Bang => match pop {
                 Value::Bool(x) => Value::Bool(!x),
                 _ => {
-                    println!("{:?}", pop);
                     self.error("can only use ! on bools");
                     panic!()
                 }
@@ -335,7 +449,56 @@ impl<'a> VM<'a> {
             }
         })
     }
-    fn call(&mut self, callee: String) {}
+    fn call(&mut self, callee: String, mut index: i32, depth: i32) -> i32 {
+        index += 1;
+        let mut counter = 1;
+        while !matches!(self.chunk.code[index as usize], OpCode::Args) {
+            let opcode = self.chunk.code[index as usize].clone();
+            index = self.execute_single(&opcode, index, depth) + 1;
+            counter += 1;
+        }
+        self.create_inner();
+        let fun = match self.functions.remove(&callee) {
+            Some(x) => x,
+            None => {
+                self.error("please call a real function next time stupid ass mf");
+                panic!()
+            }
+        };
+        self.functions.insert(callee, fun.clone());
+        for i in fun.2 {
+            let mut scope = &mut self.global;
+            for _ in 0..depth {
+                scope = scope.inner.as_mut().unwrap();
+            }
+            let pop = match scope.stack.pop() {
+                Some(x) => x,
+                None => {
+                    self.error("provided too many arguments");
+                    panic!();
+                }
+            };
+            self.set_var_(i.0, i.1, pop);
+        }
+        let mut i: i32 = 0;
+        while fun.1.len() > i as usize {
+            if matches!(fun.1[i as usize], OpCode::Return) {
+                let val = self.pop();
+                self.close_inner();
+                let mut scope = &mut self.global;
+                for _ in 0..depth {
+                    scope = scope.inner.as_mut().unwrap();
+                }
+                scope.stack.push(val);
+                println!("{:?}", self.global);
+                return counter;
+            }
+            i += self.execute_single(&fun.1[i as usize], index, depth) - index + 1;
+            println!("{} {:?}", depth, fun.1[i as usize]);
+        }
+        self.close_inner();
+        counter
+    }
     fn native_call(&mut self, callee: String) {}
 
     fn pop2(&mut self) -> (Value, Value) {

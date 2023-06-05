@@ -2,6 +2,7 @@ use error::KlangError;
 use opcode::OpCode;
 use scanner::Token;
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 use std::time::SystemTime;
 use std::{env, fs, fs::File};
 mod compiler;
@@ -129,12 +130,12 @@ fn run_file(path: &str, relfilename: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
     let tokens: Vec<Token> = scanner.scan_tokens();
-    println!("{:?}", tokens);
     let mut parser = parser::Parser::new(tokens, relfilename);
     let ast = parser.parse();
-    println!("{:?}\n", ast);
+    let start_time = Instant::now();
     let chunk = compiler::Chunk::new(compiler::compile(ast));
-    timeit!(chunk.disassemble());
+    println!("timeit results: {:?}", start_time.elapsed());
+    chunk.disassemble();
     let mut vm = vm::VM::new(chunk, relfilename);
     timeit!(vm.run());
 }

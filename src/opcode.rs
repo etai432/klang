@@ -22,7 +22,7 @@ pub enum OpCode {
     Negate,       // Negates the last numeric value on the stack.
     Jump(i32),    // Unconditionally jumps to a specified instruction address.
     JumpIf(i32), // Jumps to a specified instruction address if the last value on the stack is true.
-    Call(String), // Calls a function at a specified instruction address.
+    Call(String, i32), // Calls a function at a specified instruction address.
     NativeCall(String), // Calls a native function or external function.
     Print,       // Prints the last value on the stack to the console or output stream.
     Args,
@@ -132,7 +132,7 @@ impl fmt::Display for OpCode {
             OpCode::Negate => write!(f, "Negate"),
             OpCode::Jump(x) => write!(f, "Jump {}", x),
             OpCode::JumpIf(x) => write!(f, "JumpIf {}", x),
-            OpCode::Call(x) => write!(f, "Call {}", x),
+            OpCode::Call(x, y) => write!(f, "Call {} {}", x, y),
             OpCode::NativeCall(x) => write!(f, "NativeCall {}", x),
             OpCode::Print => write!(f, "Print"),
             OpCode::Args => write!(f, "Args"),

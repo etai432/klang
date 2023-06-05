@@ -74,7 +74,7 @@ impl<'a> Scanner<'a> {
                             None,
                         );
                     } else {
-                        if self.tokens.len() >= 1
+                        if !self.tokens.is_empty()
                             && self.tokens[self.tokens.len() - 1].tt == TokenType::Bang
                         {
                             error::KlangError::error(
