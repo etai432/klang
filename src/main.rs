@@ -136,7 +136,7 @@ fn run_file(path: &str, relfilename: &str) {
     let start_time = Instant::now();
     let chunk = compiler::Chunk::new(compiler::compile(ast));
     // println!("timeit results: {:?}", start_time.elapsed());
-    // chunk.disassemble();
+    chunk.disassemble();
     let mut vm = vm::VM::new(chunk, relfilename);
     timeit!(vm.run());
 }

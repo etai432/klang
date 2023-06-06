@@ -7,7 +7,7 @@
 let x = 3;
 //vec would be defined as let x = [1, 2, 3];
 // control flow:
-//klang uses <, >, <=, >=, ==, &&, || for control flow. and will use the basic +, -, *, / for arithmatic operations
+//klang uses <, >, <=, >=, ==, &&, || for control flow. and will use the basic +, -, *, /, % for arithmatic operations
 //if bool && bool || bool {
 //    expr;
 //} else {

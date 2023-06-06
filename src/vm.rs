@@ -26,8 +26,6 @@ impl<'a> VM<'a> {
     }
     pub fn run(&mut self) {
         //executes the code on the chunk
-        let mut scope_depth = 0;
-        let mut fun_depth = 0;
         while self.index < self.chunk.code.len() as i32 {
             // print!("{:?} ", self.chunk.code[self.index as usize]);
             // println!("{:?}", self.global);
@@ -87,21 +85,13 @@ impl<'a> VM<'a> {
                     }
                 }
                 OpCode::Call(x) => {
-                    fun_depth = self.call(x, self.index);
+                    self.call(x, self.index);
                 }
                 OpCode::NativeCall(x) => self.native_call(x),
                 OpCode::Print => self.print(),
                 OpCode::Range(x) => self.range(x),
-                OpCode::Scope => {
-                    self.create_inner();
-                    scope_depth += 1;
-                }
-                OpCode::EndScope => {
-                    if fun_depth > scope_depth {
-                        self.close_inner();
-                        scope_depth -= 1;
-                    }
-                }
+                OpCode::Scope => {self.create_inner()}
+                OpCode::EndScope => {self.close_inner()}
                 OpCode::EndFn => {}
                 OpCode::Return => {
                     let val = match self.pop() {
@@ -121,7 +111,6 @@ impl<'a> VM<'a> {
                     for _ in 0..counter {
                         self.close_inner()
                     }
-                    fun_depth -= 1;
                     self.push(val);
                 }
                 OpCode::For => self.for_loop(),
@@ -498,7 +487,7 @@ impl<'a> VM<'a> {
             }
         })
     }
-    fn call(&mut self, callee: String, index: i32) -> i32 {
+    fn call(&mut self, callee: String, index: i32) {
         let fun = match self.functions.remove(&callee) {
             Some(x) => x,
             None => {
@@ -530,13 +519,6 @@ impl<'a> VM<'a> {
             b = index as usize + i + 2;
         }
         self.chunk.code.insert(b, OpCode::EndFn);
-        let mut depth = 0;
-        let mut scope: &mut Scope = &mut self.global;
-        while scope.inner.is_some() {
-            scope = scope.inner.as_mut().unwrap();
-            depth += 1;
-        }
-        depth
     }
     fn native_call(&mut self, callee: String) {}
 

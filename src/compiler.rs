@@ -132,11 +132,9 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 block,
                 line,
             } => {
+                dump(&mut code, &mut lines, compile_expr(iterable));
                 code.push(OpCode::For);
                 lines.push(line);
-                let range = compile_expr(iterable);
-                let range_len = range.0.len() as i32;
-                dump(&mut code, &mut lines, range);
                 code.push(OpCode::Store(identifier.lexeme));
                 lines.push(line);
                 let b_vec: Vec<Stmt> = vec![*block];
@@ -147,7 +145,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 dump(&mut code, &mut lines, blok);
                 code.pop();
                 lines.pop();
-                code.push(OpCode::Jump(-(block_len + range_len + 4)));
+                code.push(OpCode::Jump(-(block_len + 2)));
                 lines.push(line);
             }
             Stmt::Fn { name, params, body } => {

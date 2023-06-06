@@ -353,7 +353,6 @@ impl<'a> Scanner<'a> {
                                 _ => (),
                             }
                             if counter == 0 {
-                                println!("{}", string1);
                                 printables.push(Token {
                                     tt: TokenType::Printable,
                                     lexeme: string1,
