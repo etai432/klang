@@ -10,6 +10,7 @@ pub enum OpCode {
     Subtract,      // Performs subtraction on the last two values on the stack.
     Multiply,      // Performs multiplication on the last two values on the stack.
     Divide,        // Performs division on the last two values on the stack.
+    Modulo,        // sex
     EqualEqual,    // Compares equality between the last two values on the stack.
     NotEqual,      // Compares inequality between the last two values on the stack.
     Less,          // Checks if the second-to-last value on the stack is less than the last value.
@@ -22,7 +23,7 @@ pub enum OpCode {
     Negate,       // Negates the last numeric value on the stack.
     Jump(i32),    // Unconditionally jumps to a specified instruction address.
     JumpIf(i32, bool), // Jumps to a specified instruction address if the last value on the stack is true.
-    Call(String), // Calls a function at a specified instruction address.
+    Call(String),      // Calls a function at a specified instruction address.
     NativeCall(String), // Calls a native function or external function.
     Print,             // Prints the last value on the stack to the console or output stream.
     Range(bool),
@@ -121,6 +122,7 @@ impl fmt::Display for OpCode {
             OpCode::Subtract => write!(f, "Subtract"),
             OpCode::Multiply => write!(f, "Multiply"),
             OpCode::Divide => write!(f, "Divide"),
+            OpCode::Modulo => write!(f, "Modulo"),
             OpCode::EqualEqual => write!(f, "EqualEqual"),
             OpCode::NotEqual => write!(f, "NotEqual"),
             OpCode::Less => write!(f, "Less"),

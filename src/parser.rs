@@ -280,7 +280,7 @@ impl<'a> Parser<'a> {
     }
     fn factor(&mut self) -> Expr {
         let left: Expr = self.range();
-        if self.match_tokens(&[TokenType::Slash, TokenType::Star]) {
+        if self.match_tokens(&[TokenType::Slash, TokenType::Star, TokenType::Modulo]) {
             let operator = self.previous();
             let right: Expr = self.factor();
             return Expr::Binary {

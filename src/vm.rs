@@ -48,6 +48,7 @@ impl<'a> VM<'a> {
                 OpCode::Subtract => self.bin_op(TokenType::Minus),
                 OpCode::Multiply => self.bin_op(TokenType::Star),
                 OpCode::Divide => self.bin_op(TokenType::Slash),
+                OpCode::Modulo => self.bin_op(TokenType::Modulo),
                 OpCode::EqualEqual => self.bin_op(TokenType::EqualEqual),
                 OpCode::NotEqual => self.bin_op(TokenType::BangEqual),
                 OpCode::Less => self.bin_op(TokenType::Less),
@@ -68,15 +69,17 @@ impl<'a> VM<'a> {
                     if t {
                         if let Value::Bool(true) = match self.pop() {
                             Some(x) => x,
-                            None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
+                            None => {
+                                self.error("stack overflow (cant pop an empty stack)");
+                                panic!()
+                            }
                         } {
                             if self.index + x > self.chunk.code.len() as i32 {
                                 self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
                             }
                             self.index += x;
                         }
-                    }
-                    else if let Value::Bool(true) = self.top() {
+                    } else if let Value::Bool(true) = self.top() {
                         if self.index + x > self.chunk.code.len() as i32 {
                             self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
                         }
@@ -89,13 +92,16 @@ impl<'a> VM<'a> {
                 OpCode::NativeCall(x) => self.native_call(x),
                 OpCode::Print => self.print(),
                 OpCode::Range(x) => self.range(x),
-                OpCode::Scope => {self.create_inner(); scope_depth += 1;},
+                OpCode::Scope => {
+                    self.create_inner();
+                    scope_depth += 1;
+                }
                 OpCode::EndScope => {
                     if fun_depth > scope_depth {
                         self.close_inner();
                         scope_depth -= 1;
                     }
-                },
+                }
                 OpCode::EndFn => {}
                 OpCode::Return => {
                     let val = match self.pop() {
@@ -117,7 +123,7 @@ impl<'a> VM<'a> {
                     }
                     fun_depth -= 1;
                     self.push(val);
-                },
+                }
                 OpCode::For => self.for_loop(),
                 OpCode::Fn => self.function(),
                 OpCode::Iterable(x) => self.iterable(x),
@@ -131,7 +137,10 @@ impl<'a> VM<'a> {
         for _ in 0..x {
             vec.push(match self.pop() {
                 Some(x) => x,
-                None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
+                None => {
+                    self.error("stack overflow (cant pop an empty stack)");
+                    panic!()
+                }
             });
         }
         let mut vec1: Vec<Value> = Vec::with_capacity(x as usize);
@@ -253,7 +262,10 @@ impl<'a> VM<'a> {
                 Some(Value::Bool(x)) => x.to_string(),
                 Some(Value::Vec(x)) => format!("{:?}", x),
                 Some(Value::None) => "None".to_string(),
-                None => {self.error("Stack overflow (cant pop an empty stack)"); panic!()}
+                None => {
+                    self.error("Stack overflow (cant pop an empty stack)");
+                    panic!()
+                }
             };
             print = self.replace_last_braces(print.as_str(), repl.as_str());
         }
@@ -312,10 +324,13 @@ impl<'a> VM<'a> {
         while scope.inner.is_some() {
             scope = scope.inner.as_mut().unwrap();
         }
-        scope.callframe.insert(name, match scope.stack.pop() {
-            Some(x) => x,
-            None => Value::None,
-        });
+        scope.callframe.insert(
+            name,
+            match scope.stack.pop() {
+                Some(x) => x,
+                None => Value::None,
+            },
+        );
     }
     fn create_inner(&mut self) {
         let mut scope: &mut Scope = &mut self.global;
@@ -374,6 +389,19 @@ impl<'a> VM<'a> {
                 }
                 _ => {
                     self.error("can only divide numbers");
+                    panic!()
+                }
+            },
+            TokenType::Modulo => match pop2 {
+                (Value::Number(x), Value::Number(y)) => {
+                    if x == 0.0 {
+                        self.error("no modulo by zero");
+                        panic!()
+                    }
+                    Value::Number(y % x)
+                }
+                _ => {
+                    self.error("can only use the modulo operator on numbers, dickfuck");
                     panic!()
                 }
             },
@@ -444,7 +472,10 @@ impl<'a> VM<'a> {
     fn un_op(&mut self, operation: TokenType) {
         let pop = match self.pop() {
             Some(x) => x,
-            None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
+            None => {
+                self.error("stack overflow (cant pop an empty stack)");
+                panic!()
+            }
         };
         self.push(match operation {
             TokenType::Bang => match pop {
@@ -484,7 +515,10 @@ impl<'a> VM<'a> {
             }
             let pop = match scope.stack.pop() {
                 Some(x) => x,
-                None => {self.error("not enough arguments!");panic!()}
+                None => {
+                    self.error("not enough arguments!");
+                    panic!()
+                }
             };
             self.push(pop);
             self.set_var(i);
@@ -507,13 +541,22 @@ impl<'a> VM<'a> {
     fn native_call(&mut self, callee: String) {}
 
     fn pop2(&mut self) -> (Value, Value) {
-        (match self.pop() {
-            Some(x) => x,
-            None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
-        }, match self.pop() {
-            Some(x) => x,
-            None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
-        })
+        (
+            match self.pop() {
+                Some(x) => x,
+                None => {
+                    self.error("stack overflow (cant pop an empty stack)");
+                    panic!()
+                }
+            },
+            match self.pop() {
+                Some(x) => x,
+                None => {
+                    self.error("stack overflow (cant pop an empty stack)");
+                    panic!()
+                }
+            },
+        )
     }
     fn pop(&mut self) -> Option<Value> {
         let mut scope: &mut Scope = &mut self.global;

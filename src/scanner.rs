@@ -55,6 +55,7 @@ impl<'a> Scanner<'a> {
                 '+' => self.make_token(TokenType::Plus, ch.to_string(), self.line, None),
                 ';' => self.make_token(TokenType::Semicolon, ch.to_string(), self.line, None),
                 '*' => self.make_token(TokenType::Star, ch.to_string(), self.line, None),
+                '%' => self.make_token(TokenType::Modulo, ch.to_string(), self.line, None),
                 '[' => self.make_token(TokenType::LeftSquare, ch.to_string(), self.line, None),
                 ']' => self.make_token(TokenType::RightSquare, ch.to_string(), self.line, None),
                 '/' => {
@@ -349,7 +350,7 @@ impl<'a> Scanner<'a> {
                             match self.chars.peek().unwrap() {
                                 '{' => counter += 1,
                                 '}' => counter -= 1,
-                                _ => ()
+                                _ => (),
                             }
                             if counter == 0 {
                                 println!("{}", string1);
@@ -387,6 +388,7 @@ pub enum TokenType {
     Plus,
     Slash,
     Star,
+    Modulo,
     Semicolon,
     LeftSquare,
     RightSquare,
@@ -436,6 +438,7 @@ impl fmt::Display for TokenType {
             TokenType::Plus => write!(f, "Plus"),
             TokenType::Slash => write!(f, "Slash"),
             TokenType::Star => write!(f, "Star"),
+            TokenType::Modulo => write!(f, "Modulo"),
             TokenType::Semicolon => write!(f, "Semicolon"),
             TokenType::Bang => write!(f, "Bang"),
             TokenType::BangEqual => write!(f, "BangEqual"),
@@ -488,17 +491,17 @@ impl fmt::Display for Value {
             Value::Bool(b) => write!(f, "{}", b),
             Value::Vec(v) => {
                 let mut vec = v.clone();
-                write!(f,"[");
+                write!(f, "[");
                 let x = vec.pop();
                 for i in vec {
                     write!(f, "{i},");
                 }
                 match x {
-                    Some(x) => write!(f,"{x}"),
+                    Some(x) => write!(f, "{x}"),
                     None => Ok(()),
                 };
-                write!(f,"]")
-            },
+                write!(f, "]")
+            }
             Value::None => write!(f, "nada"),
         }
     }

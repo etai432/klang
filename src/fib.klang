@@ -1,0 +1,10 @@
+
+fn iseven(a) {
+    if a % 2 == 0 {
+        print("even");
+    } else {
+        print("odd");
+    }
+}
+
+iseven(2);

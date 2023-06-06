@@ -72,7 +72,10 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 lines.push(line.0);
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
-                code.push(OpCode::JumpIf(blok.0.len() as i32 - 1, !elseblock.is_some()));
+                code.push(OpCode::JumpIf(
+                    blok.0.len() as i32 - 1,
+                    !elseblock.is_some(),
+                ));
                 lines.push(line.0);
                 dump(&mut code, &mut lines, blok);
                 code.pop();
@@ -206,16 +209,14 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
             for arg_expr in arguments {
                 dump(&mut code, &mut lines, compile_expr(arg_expr));
             }
-            code.push(OpCode::Call(
-                match *callee {
-                    Expr::Variable(t) => {
-                        lines.push(t.line);
-                        line = t.line;
-                        t.lexeme
-                    }
-                    _ => unreachable!(),
-                },
-            ));
+            code.push(OpCode::Call(match *callee {
+                Expr::Variable(t) => {
+                    lines.push(t.line);
+                    line = t.line;
+                    t.lexeme
+                }
+                _ => unreachable!(),
+            }));
             lines.push(line);
         }
         Expr::Grouping(expression) => dump(&mut code, &mut lines, compile_expr(*expression)),
@@ -285,6 +286,7 @@ pub fn bin(operator: TokenType) -> OpCode {
         TokenType::Minus => OpCode::Subtract,
         TokenType::Star => OpCode::Multiply,
         TokenType::Slash => OpCode::Divide,
+        TokenType::Modulo => OpCode::Modulo,
         TokenType::EqualEqual => OpCode::EqualEqual,
         TokenType::BangEqual => OpCode::NotEqual,
         TokenType::Less => OpCode::Less,
