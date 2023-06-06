@@ -35,13 +35,6 @@ impl<'a> Parser<'a> {
             self.statement()
         }
     }
-    fn declaration_inner(&mut self) -> Stmt {
-        if self.match_tokens(&[TokenType::Let]) {
-            self.var_decl()
-        } else {
-            self.statement()
-        }
-    }
 
     fn fn_decl(&mut self) -> Stmt {
         let return_t = self.previous();
@@ -171,7 +164,7 @@ impl<'a> Parser<'a> {
         let start = self.previous().line;
         let mut statements: Vec<Stmt> = Vec::new();
         while !self.is_at_end() && !self.check(TokenType::RightBrace) {
-            statements.push(self.declaration_inner());
+            statements.push(self.declaration());
         }
         self.consume(TokenType::RightBrace, "must end block with a }");
         Stmt::Block(statements, (start, self.previous().line))
@@ -380,7 +373,6 @@ impl<'a> Parser<'a> {
     }
 
     fn primary(&mut self) -> Expr {
-        todo!("handle vector creation");
         if self.match_tokens(&[TokenType::Bool]) {
             if self.previous().lexeme == "true" {
                 return Expr::Literal(Value::Bool(true), self.previous().line);
@@ -388,11 +380,23 @@ impl<'a> Parser<'a> {
                 return Expr::Literal(Value::Bool(false), self.previous().line);
             }
         }
+        if self.match_tokens(&[TokenType::LeftSquare]) {
+            let mut vec: Vec<Expr> = Vec::new();
+            vec.push(self.logical());
+            while self.match_tokens(&[TokenType::Comma]) {
+                vec.push(self.logical());
+            }
+            self.consume(TokenType::RightSquare, "gotta close the vec");
+            return Expr::Vec(vec);
+        }
         if self.match_tokens(&[TokenType::String]) {
             let string = self.previous().lexeme;
             let mut printables_t: Vec<Vec<Token>> = Vec::new();
             while self.match_tokens(&[TokenType::Printable]) {
                 let lexeme = self.previous().lexeme;
+                if lexeme.contains("\"") {
+                    self.error("why would you use a string inside a string?? are you retarded??");
+                }
                 let mut s = Scanner::new(&lexeme, self.filename);
                 let mut s1 = s.scan_tokens();
                 s1.pop();

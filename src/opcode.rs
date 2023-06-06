@@ -22,16 +22,17 @@ pub enum OpCode {
     Negate,       // Negates the last numeric value on the stack.
     Jump(i32),    // Unconditionally jumps to a specified instruction address.
     JumpIf(i32, bool), // Jumps to a specified instruction address if the last value on the stack is true.
-    Call(String, i32), // Calls a function at a specified instruction address.
+    Call(String), // Calls a function at a specified instruction address.
     NativeCall(String), // Calls a native function or external function.
     Print,             // Prints the last value on the stack to the console or output stream.
-    Args,
     Range(bool),
     Scope,
     EndScope,
+    EndFn,
     Return,
     For,
     Fn,
+    Iterable(i32),
     Eof,
 }
 
@@ -132,16 +133,17 @@ impl fmt::Display for OpCode {
             OpCode::Negate => write!(f, "Negate"),
             OpCode::Jump(x) => write!(f, "Jump {}", x),
             OpCode::JumpIf(x, y) => write!(f, "JumpIf {} {}", x, y),
-            OpCode::Call(x, y) => write!(f, "Call {} {}", x, y),
+            OpCode::Call(x) => write!(f, "Call {}", x),
             OpCode::NativeCall(x) => write!(f, "NativeCall {}", x),
             OpCode::Print => write!(f, "Print"),
-            OpCode::Args => write!(f, "Args"),
             OpCode::Range(x) => write!(f, "Range {}", x),
             OpCode::Scope => write!(f, "Scope"),
             OpCode::EndScope => write!(f, "EndScope"),
+            OpCode::EndFn => write!(f, "EndFn"),
             OpCode::Return => write!(f, "Return"),
             OpCode::For => write!(f, "For"),
             OpCode::Fn => write!(f, "Fn"),
+            OpCode::Iterable(x) => write!(f, "Iterable {}", x),
             OpCode::Eof => write!(f, "Eof"),
         }
     }

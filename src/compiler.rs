@@ -72,7 +72,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 lines.push(line.0);
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
-                code.push(OpCode::JumpIf(blok.0.len() as i32 - 1, false));
+                code.push(OpCode::JumpIf(blok.0.len() as i32 - 1, !elseblock.is_some()));
                 lines.push(line.0);
                 dump(&mut code, &mut lines, blok);
                 code.pop();
@@ -171,9 +171,9 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
     code.push(OpCode::Eof);
     lines.push(0);
     for (i, op) in code.clone().into_iter().enumerate() {
-        if matches!(op, OpCode::Call(_, _)) {
-            if let OpCode::Call(x, _) = &code[i] {
-                code[i] = OpCode::Call(x.clone(), i as i32);
+        if matches!(op, OpCode::Call(_)) {
+            if let OpCode::Call(x) = &code[i] {
+                code[i] = OpCode::Call(x.clone());
             }
         }
     }
@@ -202,6 +202,10 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
         }
         Expr::Call { callee, arguments } => {
             let line;
+            let len = arguments.len() as i32;
+            for arg_expr in arguments {
+                dump(&mut code, &mut lines, compile_expr(arg_expr));
+            }
             code.push(OpCode::Call(
                 match *callee {
                     Expr::Variable(t) => {
@@ -211,13 +215,7 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
                     }
                     _ => unreachable!(),
                 },
-                0,
             ));
-            lines.push(line);
-            for arg_expr in arguments {
-                dump(&mut code, &mut lines, compile_expr(arg_expr));
-            }
-            code.push(OpCode::Args);
             lines.push(line);
         }
         Expr::Grouping(expression) => dump(&mut code, &mut lines, compile_expr(*expression)),
@@ -268,6 +266,14 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
         Expr::Variable(name) => {
             code.push(OpCode::Load(name.lexeme));
             lines.push(name.line)
+        }
+        Expr::Vec(vec) => {
+            let len = vec.len();
+            for i in vec {
+                dump(&mut code, &mut lines, compile_expr(i));
+            }
+            code.push(OpCode::Iterable(len as i32));
+            lines.push(0);
         }
     }
     (code, lines)

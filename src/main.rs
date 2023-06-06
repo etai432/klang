@@ -132,10 +132,11 @@ fn run_file(path: &str, relfilename: &str) {
     let tokens: Vec<Token> = scanner.scan_tokens();
     let mut parser = parser::Parser::new(tokens, relfilename);
     let ast = parser.parse();
+    // println!("{:?}", ast);
     let start_time = Instant::now();
     let chunk = compiler::Chunk::new(compiler::compile(ast));
-    println!("timeit results: {:?}", start_time.elapsed());
-    chunk.disassemble();
+    // println!("timeit results: {:?}", start_time.elapsed());
+    // chunk.disassemble();
     let mut vm = vm::VM::new(chunk, relfilename);
     timeit!(vm.run());
 }

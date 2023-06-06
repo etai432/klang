@@ -5,14 +5,13 @@ use crate::{
     KlangError,
 };
 use std::collections::HashMap;
-pub type Function = (Vec<OpCode>, Vec<String>);
 #[derive(Debug, Clone)]
 pub struct VM<'a> {
     pub chunk: Chunk,
     pub global: Scope,
     pub index: i32,
     pub filename: &'a str,
-    pub functions: HashMap<String, Function>,
+    pub functions: HashMap<String, (Vec<OpCode>, Vec<String>)>,
 }
 
 impl<'a> VM<'a> {
@@ -27,8 +26,10 @@ impl<'a> VM<'a> {
     }
     pub fn run(&mut self) {
         //executes the code on the chunk
+        let mut scope_depth = 0;
+        let mut fun_depth = 0;
         while self.index < self.chunk.code.len() as i32 {
-            // println!("{:?}", self.chunk.code[self.index as usize]);
+            // print!("{:?} ", self.chunk.code[self.index as usize]);
             // println!("{:?}", self.global);
             match self.chunk.code[self.index as usize].clone() {
                 OpCode::Constant(x) => self.push(x),
@@ -63,97 +64,81 @@ impl<'a> VM<'a> {
                     }
                     self.index += x;
                 }
-                OpCode::JumpIf(x, _) => {
-                    if let Value::Bool(true) = self.top() {
+                OpCode::JumpIf(x, t) => {
+                    if t {
+                        if let Value::Bool(true) = match self.pop() {
+                            Some(x) => x,
+                            None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
+                        } {
+                            if self.index + x > self.chunk.code.len() as i32 {
+                                self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
+                            }
+                            self.index += x;
+                        }
+                    }
+                    else if let Value::Bool(true) = self.top() {
                         if self.index + x > self.chunk.code.len() as i32 {
                             self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
                         }
                         self.index += x;
                     }
                 }
-                OpCode::Call(x, y) => {
-                    self.index += self.call(x, y, 0);
+                OpCode::Call(x) => {
+                    fun_depth = self.call(x, self.index);
                 }
                 OpCode::NativeCall(x) => self.native_call(x),
                 OpCode::Print => self.print(),
-                OpCode::Args => self.error("args can only appear in the call function"),
                 OpCode::Range(x) => self.range(x),
-                OpCode::Scope => self.create_inner(),
-                OpCode::EndScope => self.close_inner(),
-                OpCode::Return => self.error("return can only appear inside functions"),
+                OpCode::Scope => {self.create_inner(); scope_depth += 1;},
+                OpCode::EndScope => {
+                    if fun_depth > scope_depth {
+                        self.close_inner();
+                        scope_depth -= 1;
+                    }
+                },
+                OpCode::EndFn => {}
+                OpCode::Return => {
+                    let val = match self.pop() {
+                        Some(x) => x,
+                        None => Value::None,
+                    };
+                    let mut counter = 1;
+                    while !matches!(self.chunk.code[self.index as usize], OpCode::EndFn) {
+                        self.index += 1;
+                        if matches!(self.chunk.code[self.index as usize], OpCode::Scope) {
+                            counter -= 1;
+                        }
+                        if matches!(self.chunk.code[self.index as usize], OpCode::EndScope) {
+                            counter += 1;
+                        }
+                    }
+                    for _ in 0..counter {
+                        self.close_inner()
+                    }
+                    fun_depth -= 1;
+                    self.push(val);
+                },
                 OpCode::For => self.for_loop(),
                 OpCode::Fn => self.function(),
+                OpCode::Iterable(x) => self.iterable(x),
                 OpCode::Eof => {}
             }
             self.index += 1;
         }
     }
-    fn execute_single(&mut self, opcode: &OpCode, mut index: i32, depth: i32) -> i32 {
-        //executes the code on the chunk
-        match opcode.clone() {
-            OpCode::Constant(x) => self.push(x),
-            OpCode::Store(x) => self.set_var(x),
-            OpCode::Load(x) => {
-                let var = match VM::get_var(&x, &mut self.global).0 {
-                    Some(x) => x,
-                    None => {
-                        self.error(format!("variable \"{x}\" do not exist").as_str());
-                        panic!()
-                    }
-                };
-                self.push(var);
-            }
-            OpCode::Add => self.bin_op(TokenType::Plus),
-            OpCode::Subtract => self.bin_op(TokenType::Minus),
-            OpCode::Multiply => self.bin_op(TokenType::Star),
-            OpCode::Divide => self.bin_op(TokenType::Slash),
-            OpCode::EqualEqual => self.bin_op(TokenType::EqualEqual),
-            OpCode::NotEqual => self.bin_op(TokenType::BangEqual),
-            OpCode::Less => self.bin_op(TokenType::Less),
-            OpCode::LessEqual => self.bin_op(TokenType::LessEqual),
-            OpCode::Greater => self.bin_op(TokenType::Greater),
-            OpCode::GreaterEqual => self.bin_op(TokenType::GreaterEqual),
-            OpCode::LogicalAnd => self.bin_op(TokenType::And),
-            OpCode::LogicalOr => self.bin_op(TokenType::Or),
-            OpCode::LogicalNot => self.un_op(TokenType::Bang),
-            OpCode::Negate => self.un_op(TokenType::Minus),
-            OpCode::Jump(x) => {
-                if index + x > self.chunk.code.len() as i32 {
-                    self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
-                }
-                index += x;
-            }
-            OpCode::JumpIf(x, y) => {
-                if y {
-                    if let Value::Bool(true) = self.pop() {
-                        if index + x > self.chunk.code.len() as i32 {
-                            self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
-                        }
-                        index += x;
-                    }
-                } else if let Value::Bool(true) = self.top() {
-                    if index + x > self.chunk.code.len() as i32 {
-                        self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
-                    }
-                    index += x;
-                }
-            }
-            OpCode::Call(x, y) => {
-                index += self.call(x, y, depth + 1);
-                println!("{:?}", self.global);
-            }
-            OpCode::NativeCall(x) => self.native_call(x),
-            OpCode::Print => self.print(),
-            OpCode::Args => self.error("args can only appear in the call function"),
-            OpCode::Range(x) => self.range(x),
-            OpCode::Scope => self.create_inner(),
-            OpCode::EndScope => self.close_inner(),
-            OpCode::Return => self.error("return can only appear inside functions"),
-            OpCode::For => self.for_loop(),
-            OpCode::Fn => self.function(),
-            OpCode::Eof => {}
-        };
-        index
+    fn iterable(&mut self, x: i32) {
+        let mut vec: Vec<Value> = Vec::with_capacity(x as usize);
+        for _ in 0..x {
+            vec.push(match self.pop() {
+                Some(x) => x,
+                None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
+            });
+        }
+        let mut vec1: Vec<Value> = Vec::with_capacity(x as usize);
+        for i in vec.into_iter().rev() {
+            vec1.push(i);
+        }
+        self.push(Value::Vec(vec1));
     }
     fn function(&mut self) {
         self.index += 1; //consume fn
@@ -192,21 +177,21 @@ impl<'a> VM<'a> {
     fn range(&mut self, cstep: bool) {
         if cstep {
             let step = match self.pop() {
-                Value::Number(x) => x,
+                Some(Value::Number(x)) => x,
                 _ => {
                     self.error("step is not a number");
                     panic!()
                 }
             };
             let end = match self.pop() {
-                Value::Number(x) => x,
+                Some(Value::Number(x)) => x,
                 _ => {
                     self.error("end is not a number");
                     panic!()
                 }
             };
             let start = match self.pop() {
-                Value::Number(x) => x,
+                Some(Value::Number(x)) => x,
                 _ => {
                     self.error("start is not a number");
                     panic!()
@@ -219,14 +204,14 @@ impl<'a> VM<'a> {
             self.push(Value::Vec(vec))
         } else {
             let end = match self.pop() {
-                Value::Number(x) => x,
+                Some(Value::Number(x)) => x,
                 _ => {
                     self.error("end is not a number");
                     panic!()
                 }
             };
             let start = match self.pop() {
-                Value::Number(x) => x,
+                Some(Value::Number(x)) => x,
                 _ => {
                     self.error("start is not a number");
                     panic!()
@@ -249,26 +234,26 @@ impl<'a> VM<'a> {
         //jump
     }
     fn print(&mut self) {
-        println!("{:?}", self.global);
         let mut print = match self.pop() {
-            Value::String {
+            Some(Value::String {
                 string,
                 printables: _,
-            } => string,
+            }) => string,
             _ => {
                 panic!()
             }
         };
         for _ in 0..self.count_braces(print.as_str()) {
             let repl = match self.pop() {
-                Value::String {
+                Some(Value::String {
                     string,
                     printables: _,
-                } => string,
-                Value::Number(x) => x.to_string(),
-                Value::Bool(x) => x.to_string(),
-                Value::Vec(x) => format!("{:?}", x),
-                Value::None => "None".to_string(),
+                }) => string,
+                Some(Value::Number(x)) => x.to_string(),
+                Some(Value::Bool(x)) => x.to_string(),
+                Some(Value::Vec(x)) => format!("{:?}", x),
+                Some(Value::None) => "None".to_string(),
+                None => {self.error("Stack overflow (cant pop an empty stack)"); panic!()}
             };
             print = self.replace_last_braces(print.as_str(), repl.as_str());
         }
@@ -327,15 +312,10 @@ impl<'a> VM<'a> {
         while scope.inner.is_some() {
             scope = scope.inner.as_mut().unwrap();
         }
-        scope.callframe.insert(name, scope.stack.pop().unwrap());
-    }
-    fn set_var_(&mut self, name: String, val: Value) {
-        //sets a variable in the most inner scope, to the top value of the stack
-        let mut scope: &mut Scope = &mut self.global;
-        while scope.inner.is_some() {
-            scope = scope.inner.as_mut().unwrap();
-        }
-        scope.callframe.insert(name, val);
+        scope.callframe.insert(name, match scope.stack.pop() {
+            Some(x) => x,
+            None => Value::None,
+        });
     }
     fn create_inner(&mut self) {
         let mut scope: &mut Scope = &mut self.global;
@@ -462,7 +442,10 @@ impl<'a> VM<'a> {
         });
     }
     fn un_op(&mut self, operation: TokenType) {
-        let pop = self.pop();
+        let pop = match self.pop() {
+            Some(x) => x,
+            None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
+        };
         self.push(match operation {
             TokenType::Bang => match pop {
                 Value::Bool(x) => Value::Bool(!x),
@@ -484,15 +467,7 @@ impl<'a> VM<'a> {
             }
         })
     }
-    fn call(&mut self, callee: String, mut index: i32, depth: i32) -> i32 {
-        index += 1;
-        let mut counter = 1;
-        while !matches!(self.chunk.code[index as usize], OpCode::Args) {
-            let opcode = self.chunk.code[index as usize].clone();
-            index = self.execute_single(&opcode, index, depth) + 1;
-            counter += 1;
-            println!("{:?} {:?}", self.chunk.code[index as usize], self.global);
-        }
+    fn call(&mut self, callee: String, index: i32) -> i32 {
         let fun = match self.functions.remove(&callee) {
             Some(x) => x,
             None => {
@@ -500,55 +475,52 @@ impl<'a> VM<'a> {
                 panic!()
             }
         };
+        self.functions.insert(callee.clone(), fun.clone());
         self.create_inner();
-        self.functions.insert(callee, fun.clone());
         for i in fun.1.into_iter().rev() {
-            let mut scope = &mut self.global;
-            for _ in 0..depth {
+            let mut scope: &mut Scope = &mut self.global;
+            while scope.inner.as_mut().unwrap().inner.is_some() {
                 scope = scope.inner.as_mut().unwrap();
             }
             let pop = match scope.stack.pop() {
                 Some(x) => x,
-                None => {
-                    self.error("provided too many arguments");
-                    panic!();
-                }
+                None => {self.error("not enough arguments!");panic!()}
             };
-            self.set_var_(i, pop);
+            self.push(pop);
+            self.set_var(i);
         }
-        let mut i: i32 = 0;
-        while fun.0.len() > i as usize {
-            if matches!(fun.0[i as usize], OpCode::Return) {
-                let val = self.pop();
-                self.close_inner();
-                let mut scope = &mut self.global;
-                for _ in 0..depth {
-                    scope = scope.inner.as_mut().unwrap();
-                }
-                scope.stack.push(val);
-                return counter;
-            }
-            i += self.execute_single(&fun.0[i as usize], index, depth) - index + 1;
-            println!("{} {:?} {:?}", depth, fun.0[i as usize], self.global);
+        let mut b = 0;
+        for (i, op) in fun.0.into_iter().enumerate() {
+            self.chunk.code.insert(index as usize + i + 1, op);
+            self.chunk.lines.push(0);
+            b = index as usize + i + 2;
         }
-        self.close_inner();
-        counter
+        self.chunk.code.insert(b, OpCode::EndFn);
+        let mut depth = 0;
+        let mut scope: &mut Scope = &mut self.global;
+        while scope.inner.is_some() {
+            scope = scope.inner.as_mut().unwrap();
+            depth += 1;
+        }
+        depth
     }
     fn native_call(&mut self, callee: String) {}
 
     fn pop2(&mut self) -> (Value, Value) {
-        (self.pop(), self.pop())
+        (match self.pop() {
+            Some(x) => x,
+            None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
+        }, match self.pop() {
+            Some(x) => x,
+            None => {self.error("stack overflow (cant pop an empty stack)"); panic!()}
+        })
     }
-    fn pop(&mut self) -> Value {
+    fn pop(&mut self) -> Option<Value> {
         let mut scope: &mut Scope = &mut self.global;
         while scope.inner.is_some() {
             scope = scope.inner.as_mut().unwrap();
         }
-        if scope.stack.is_empty() {
-            self.error("stack overflow (cant pop an empty stack)");
-            panic!()
-        }
-        scope.stack.pop().unwrap()
+        scope.stack.pop()
     }
     fn top(&mut self) -> Value {
         let mut scope: &mut Scope = &mut self.global;

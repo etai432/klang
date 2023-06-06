@@ -342,10 +342,17 @@ impl<'a> Scanner<'a> {
                             );
                             self.had_error = true;
                         }
+                        let mut counter = 1;
                         while self.chars.peek().is_some() {
                             let ch1 = self.chars.next().unwrap();
                             string1.push(ch1);
-                            if self.chars.peek() == Some(&'}') {
+                            match self.chars.peek().unwrap() {
+                                '{' => counter += 1,
+                                '}' => counter -= 1,
+                                _ => ()
+                            }
+                            if counter == 0 {
+                                println!("{}", string1);
                                 printables.push(Token {
                                     tt: TokenType::Printable,
                                     lexeme: string1,
@@ -479,7 +486,19 @@ impl fmt::Display for Value {
             Value::String { string, .. } => write!(f, "{}", string),
             Value::Number(i) => write!(f, "{}", i),
             Value::Bool(b) => write!(f, "{}", b),
-            Value::Vec(v) => write!(f, "{:?}", v),
+            Value::Vec(v) => {
+                let mut vec = v.clone();
+                write!(f,"[");
+                let x = vec.pop();
+                for i in vec {
+                    write!(f, "{i},");
+                }
+                match x {
+                    Some(x) => write!(f,"{x}"),
+                    None => Ok(()),
+                };
+                write!(f,"]")
+            },
             Value::None => write!(f, "nada"),
         }
     }

@@ -1,5 +1,10 @@
-fn add(int1, int2) {
-    return int1 + int2;
+{
+    fn fibonacci(n) {
+        if n <= 1 {
+            return n;
+        }
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
 }
-print("adding 2 integers: {add(8, 3)}");
-print("{}");
+
+print("fib of 10: {fibonacci(10)}");

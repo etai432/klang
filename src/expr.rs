@@ -29,4 +29,5 @@ pub enum Expr {
         step: Option<Box<Expr>>,
         line: usize,
     }, // range
+    Vec(Vec<Expr>),
 }
