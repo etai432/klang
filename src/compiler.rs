@@ -135,17 +135,21 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 dump(&mut code, &mut lines, compile_expr(iterable));
                 code.push(OpCode::For);
                 lines.push(line);
+                code.push(OpCode::Scope);
+                lines.push(line);
                 code.push(OpCode::Store(identifier.lexeme));
                 lines.push(line);
                 let b_vec: Vec<Stmt> = vec![*block];
-                let blok = compile(b_vec);
+                let mut blok = compile(b_vec);
+                blok.0.remove(0);
+                blok.1.remove(0);
                 let block_len = blok.0.len() as i32;
                 code.push(OpCode::JumpIf(block_len, true));
                 lines.push(line);
                 dump(&mut code, &mut lines, blok);
                 code.pop();
                 lines.pop();
-                code.push(OpCode::Jump(-(block_len + 1)));
+                code.push(OpCode::Jump(-(block_len + 4)));
                 lines.push(line);
             }
             Stmt::Fn { name, params, body } => {

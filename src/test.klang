@@ -16,5 +16,4 @@ fn fizzbuzz(a, b) {
     }
 }
 
-
 fizzbuzz(1, 100);

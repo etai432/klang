@@ -226,7 +226,6 @@ impl<'a> VM<'a> {
         }
     }
     fn for_loop(&mut self) {
-        self.index += 1;
         let range = match self.pop() {
             Some(x) => x,
             None => {
@@ -241,37 +240,21 @@ impl<'a> VM<'a> {
                 panic!();
             }
         };
-        let x = vector.pop().unwrap();
-        for i in vector {
-            self.create_inner();
-            self.push(i);
-            self.once();
-            self.index += 3;
-            while !matches!(
-                self.chunk.code[self.index as usize].clone(),
-                OpCode::EndScope
-            ) {
-                self.once();
-                self.index += 1;
-            }
-            self.index += 1;
-            self.once();
-            self.close_inner()
-        }
-        self.create_inner();
-        self.push(x);
-        self.once();
-        self.index += 3;
-        while !matches!(
-            self.chunk.code[self.index as usize].clone(),
-            OpCode::EndScope
-        ) {
-            self.once();
-            self.index += 1;
-        }
         self.index += 1;
-
-        self.close_inner()
+        self.create_inner();
+        if vector.is_empty() {
+            self.push(Value::Bool(true));
+            self.push(Value::None);
+            return;
+        } else {
+            self.push(Value::Bool(false));
+            self.push(vector.remove(0));
+        }
+        let mut scope: &mut Scope = &mut self.global;
+        while scope.inner.as_mut().unwrap().inner.is_some() {
+            scope = scope.inner.as_mut().unwrap();
+        }
+        scope.stack.push(Value::Vec(vector));
     }
     fn print(&mut self) {
         let mut print = match self.pop() {
