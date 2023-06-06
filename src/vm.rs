@@ -95,8 +95,8 @@ impl<'a> VM<'a> {
             OpCode::NativeCall(x) => self.native_call(x),
             OpCode::Print => self.print(),
             OpCode::Range(x) => self.range(x),
-            OpCode::Scope => {self.create_inner()}
-            OpCode::EndScope => {self.close_inner()}
+            OpCode::Scope => self.create_inner(),
+            OpCode::EndScope => self.close_inner(),
             OpCode::EndFn => {}
             OpCode::Return => {
                 let val = match self.pop() {
@@ -226,13 +226,52 @@ impl<'a> VM<'a> {
         }
     }
     fn for_loop(&mut self) {
-        //opcodes list:
-        //starts with for opcode
-        //then calls self.range() to evaluate the iterable
-        //Store(iden)
-        //jumpif
-        //block
-        //jump
+        self.index += 1;
+        let range = match self.pop() {
+            Some(x) => x,
+            None => {
+                self.error("invalid witewabwe!");
+                panic!();
+            }
+        };
+        let mut vector = match range {
+            Value::Vec(x) => x,
+            _ => {
+                self.error("invalid witewabwe!");
+                panic!();
+            }
+        };
+        let x = vector.pop().unwrap();
+        for i in vector {
+            self.create_inner();
+            self.push(i);
+            self.once();
+            self.index += 3;
+            while !matches!(
+                self.chunk.code[self.index as usize].clone(),
+                OpCode::EndScope
+            ) {
+                self.once();
+                self.index += 1;
+            }
+            self.index += 1;
+            self.once();
+            self.close_inner()
+        }
+        self.create_inner();
+        self.push(x);
+        self.once();
+        self.index += 3;
+        while !matches!(
+            self.chunk.code[self.index as usize].clone(),
+            OpCode::EndScope
+        ) {
+            self.once();
+            self.index += 1;
+        }
+        self.index += 1;
+
+        self.close_inner()
     }
     fn print(&mut self) {
         let mut print = match self.pop() {

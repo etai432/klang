@@ -1,12 +1,20 @@
-for i in 0..5..2 {
-    print("hi");
+fn fizzbuzz(a, b) {
+    for i in a..b {
+        if i % 15 == 0 {
+            print("fizzbuzz");
+        } else {
+            if i % 3 == 0 {
+                print("fizz");
+            } else {
+                if i % 5 == 0 {
+                    print("buzz");
+                } else {
+                    print("{i}");
+                }
+            }
+        }
+    }
 }
 
-//0..5..2 -> [0, 2, 4]
-//for
-//create_inner
-//store i
-//JumpIf block+jump
-//block without create_inner
-//jump to create_inner
-//close_inner
+
+fizzbuzz(1, 100);

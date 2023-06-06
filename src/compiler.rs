@@ -145,7 +145,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 dump(&mut code, &mut lines, blok);
                 code.pop();
                 lines.pop();
-                code.push(OpCode::Jump(-(block_len + 2)));
+                code.push(OpCode::Jump(-(block_len + 1)));
                 lines.push(line);
             }
             Stmt::Fn { name, params, body } => {
