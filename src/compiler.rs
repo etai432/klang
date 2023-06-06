@@ -2,7 +2,6 @@ use crate::expr::Expr;
 use crate::opcode::OpCode;
 use crate::scanner::{TokenType, Value};
 use crate::stmt::Stmt;
-use crate::vm::Type;
 
 #[derive(Debug, Clone)]
 pub struct Chunk {
@@ -73,7 +72,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 lines.push(line.0);
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
-                code.push(OpCode::JumpIf(blok.0.len() as i32 - 1));
+                code.push(OpCode::JumpIf(blok.0.len() as i32 - 1, false));
                 lines.push(line.0);
                 dump(&mut code, &mut lines, blok);
                 code.pop();
@@ -83,14 +82,14 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                     lines.push(line.1.unwrap());
                     let b_vec: Vec<Stmt> = vec![*elseblock.unwrap()];
                     let blok = compile(b_vec);
-                    code.push(OpCode::JumpIf(blok.0.len() as i32 - 1));
+                    code.push(OpCode::JumpIf(blok.0.len() as i32 - 1, true));
                     lines.push(line.1.unwrap());
                     dump(&mut code, &mut lines, blok);
                     code.pop();
                     lines.pop();
                 }
             }
-            Stmt::Var { name, t, value } => {
+            Stmt::Var { name, value } => {
                 match value {
                     Some(value) => dump(&mut code, &mut lines, compile_expr(value)),
                     None => {
@@ -98,14 +97,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                         lines.push(name.line)
                     }
                 }
-                let t: Type = match t.tt {
-                    TokenType::Int => Type::Int,
-                    TokenType::Float => Type::Float,
-                    TokenType::String => Type::String,
-                    TokenType::Bool => Type::Bool,
-                    _ => panic!("dont tell me right paren is a variable type now :skullemoji:"),
-                };
-                code.push(OpCode::Store(name.lexeme, t));
+                code.push(OpCode::Store(name.lexeme));
                 lines.push(name.line)
             }
             Stmt::While {
@@ -121,7 +113,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
                 let block_len = blok.0.len() as i32;
-                code.push(OpCode::JumpIf(block_len - 1));
+                code.push(OpCode::JumpIf(block_len - 1, true));
                 lines.push(line);
                 dump(&mut code, &mut lines, blok);
                 code.pop();
@@ -142,12 +134,12 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 let range = compile_expr(iterable);
                 let range_len = range.0.len() as i32;
                 dump(&mut code, &mut lines, range);
-                code.push(OpCode::Store(identifier.lexeme, Type::None));
+                code.push(OpCode::Store(identifier.lexeme));
                 lines.push(line);
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
                 let block_len = blok.0.len() as i32;
-                code.push(OpCode::JumpIf(block_len));
+                code.push(OpCode::JumpIf(block_len, true));
                 lines.push(line);
                 dump(&mut code, &mut lines, blok);
                 code.pop();
@@ -155,41 +147,18 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 code.push(OpCode::Jump(-(block_len + range_len + 4)));
                 lines.push(line);
             }
-            Stmt::Fn {
-                return_t,
-                name,
-                params,
-                body,
-            } => {
-                code.push(OpCode::Fn(match return_t {
-                    None => Type::None,
-                    Some(x) => match x.tt {
-                        TokenType::Int => Type::Int,
-                        TokenType::Float => Type::Float,
-                        TokenType::String => Type::String,
-                        TokenType::Bool => Type::Bool,
-                        _ => panic!("if you got here.. ksang has big.. NO HUGE problemo in code"),
-                    },
-                }));
+            Stmt::Fn { name, params, body } => {
+                code.push(OpCode::Fn);
                 lines.push(name.line);
                 for i in params {
-                    code.push(OpCode::Store(
-                        i.0.lexeme,
-                        match i.1.tt {
-                            TokenType::Int => Type::Int,
-                            TokenType::Float => Type::Float,
-                            TokenType::String => Type::String,
-                            TokenType::Bool => Type::Bool,
-                            _ => unreachable!(),
-                        },
-                    ));
+                    code.push(OpCode::Store(i.lexeme));
                     lines.push(name.line);
                 }
                 let b_vec: Vec<Stmt> = vec![*body];
                 dump(&mut code, &mut lines, compile(b_vec));
                 code.pop();
                 lines.pop();
-                code.push(OpCode::Store(name.lexeme, Type::None));
+                code.push(OpCode::Store(name.lexeme));
                 lines.push(name.line);
             }
             Stmt::Return(expr, line) => {
@@ -218,7 +187,7 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
     match expr {
         Expr::Assign { name, value } => {
             dump(&mut code, &mut lines, compile_expr(*value));
-            code.push(OpCode::Store(name.lexeme, Type::None));
+            code.push(OpCode::Store(name.lexeme));
             lines.push(name.line)
         }
         Expr::Binary {
@@ -275,17 +244,17 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
             line,
         } => match step {
             Some(x) => {
-                code.push(OpCode::Range(true));
-                lines.push(line);
                 dump(&mut code, &mut lines, compile_expr(*min));
                 dump(&mut code, &mut lines, compile_expr(*max));
                 dump(&mut code, &mut lines, compile_expr(*x));
+                code.push(OpCode::Range(true));
+                lines.push(line);
             }
             None => {
-                code.push(OpCode::Range(false));
-                lines.push(line);
                 dump(&mut code, &mut lines, compile_expr(*min));
                 dump(&mut code, &mut lines, compile_expr(*max));
+                code.push(OpCode::Range(false));
+                lines.push(line);
             }
         },
         Expr::Unary {

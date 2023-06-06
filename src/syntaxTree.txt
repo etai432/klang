@@ -1,7 +1,7 @@
 statements are the building blocks of a program. example for a statement is If statement
 program => declaration* EOF ;
 declaration => varDecl | fnDecl | statement ;
-fnDecl => fn type? identifier "(" (identifier":" type ("," identifier":" type)*)? ")" block ;
+fnDecl => fn identifier "(" (identifier":" type ("," identifier":" type)*)? ")" block ;
 varDecl => let Identifier ":" type ("=" expression)? ";" ;
 statement => exprStmt | printStmt | block | ifStmt | whileStmt | forStmt | returnStmt ;
 returnStmt => "return" expression ";" ;

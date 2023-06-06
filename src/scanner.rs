@@ -55,7 +55,8 @@ impl<'a> Scanner<'a> {
                 '+' => self.make_token(TokenType::Plus, ch.to_string(), self.line, None),
                 ';' => self.make_token(TokenType::Semicolon, ch.to_string(), self.line, None),
                 '*' => self.make_token(TokenType::Star, ch.to_string(), self.line, None),
-                ':' => self.make_token(TokenType::Colon, ch.to_string(), self.line, None),
+                '[' => self.make_token(TokenType::LeftSquare, ch.to_string(), self.line, None),
+                ']' => self.make_token(TokenType::RightSquare, ch.to_string(), self.line, None),
                 '/' => {
                     if self.is_next('/') {
                         while self.chars.next() != Some('\n') && self.chars.peek().is_some() {}
@@ -251,7 +252,7 @@ impl<'a> Scanner<'a> {
             if self.chars.peek().unwrap_or(&'\0') == &'.' {
                 number.pop();
                 let value = match number.parse::<i64>() {
-                    Ok(e) => Some(Value::Int(e)),
+                    Ok(e) => Some(Value::Number(e as f64)),
                     Err(_) => {
                         error::KlangError::error(
                             KlangError::ScannerError,
@@ -260,7 +261,7 @@ impl<'a> Scanner<'a> {
                             self.filename,
                         );
                         self.had_error = true;
-                        Some(Value::Int(0))
+                        Some(Value::Number(0.0))
                     }
                 };
                 self.make_token(TokenType::Int, "".to_string(), self.line, value);
@@ -280,7 +281,7 @@ impl<'a> Scanner<'a> {
                     self.had_error = true;
                 }
                 let value = match number.parse::<f64>() {
-                    Ok(e) => Some(Value::Float(e)),
+                    Ok(e) => Some(Value::Number(e)),
                     Err(_) => {
                         error::KlangError::error(
                             KlangError::ScannerError,
@@ -289,14 +290,14 @@ impl<'a> Scanner<'a> {
                             self.filename,
                         );
                         self.had_error = true;
-                        Some(Value::Float(0.0))
+                        Some(Value::Number(0.0))
                     }
                 };
                 self.make_token(TokenType::Float, "".to_string(), self.line, value)
             }
         } else {
             let value = match number.parse::<i64>() {
-                Ok(e) => Some(Value::Int(e)),
+                Ok(e) => Some(Value::Number(e as f64)),
                 Err(_) => {
                     error::KlangError::error(
                         KlangError::ScannerError,
@@ -305,7 +306,7 @@ impl<'a> Scanner<'a> {
                         self.filename,
                     );
                     self.had_error = true;
-                    Some(Value::Int(0))
+                    Some(Value::Number(0.0))
                 }
             };
             self.make_token(TokenType::Int, "".to_string(), self.line, value)
@@ -380,7 +381,8 @@ pub enum TokenType {
     Slash,
     Star,
     Semicolon,
-    Colon,
+    LeftSquare,
+    RightSquare,
 
     Bang,
     BangEqual,
@@ -417,6 +419,8 @@ impl fmt::Display for TokenType {
         match self {
             TokenType::LeftParen => write!(f, "LeftParen"),
             TokenType::RightParen => write!(f, "RightParen"),
+            TokenType::LeftSquare => write!(f, "LeftSquare"),
+            TokenType::RightSquare => write!(f, "RightSquare"),
             TokenType::LeftBrace => write!(f, "LeftBrace"),
             TokenType::RightBrace => write!(f, "RightBrace"),
             TokenType::Comma => write!(f, "Comma"),
@@ -426,7 +430,6 @@ impl fmt::Display for TokenType {
             TokenType::Slash => write!(f, "Slash"),
             TokenType::Star => write!(f, "Star"),
             TokenType::Semicolon => write!(f, "Semicolon"),
-            TokenType::Colon => write!(f, "Colon"),
             TokenType::Bang => write!(f, "Bang"),
             TokenType::BangEqual => write!(f, "BangEqual"),
             TokenType::Equal => write!(f, "Equal"),
@@ -464,36 +467,19 @@ pub enum Value {
         string: String,
         printables: Vec<Expr>,
     },
-    Int(i64),
-    Float(f64),
+    Number(f64),
     Bool(bool),
+    Vec(Vec<Value>),
     None,
-}
-
-impl Value {
-    fn to_u8(&self) -> Vec<u8> {
-        let mut store: Vec<u8> = Vec::new();
-        match self {
-            Value::String {
-                string: _,
-                printables: _,
-            } => store.push(0),
-            Value::Int(_) => store.push(1),
-            Value::Float(_) => store.push(2),
-            Value::Bool(_) => store.push(3),
-            Value::None => store.push(4),
-        };
-        todo!()
-    }
 }
 
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Value::String { string, .. } => write!(f, "{}", string),
-            Value::Int(i) => write!(f, "{}", i),
-            Value::Float(fl) => write!(f, "{}", fl),
+            Value::Number(i) => write!(f, "{}", i),
             Value::Bool(b) => write!(f, "{}", b),
+            Value::Vec(v) => write!(f, "{:?}", v),
             Value::None => write!(f, "nada"),
         }
     }

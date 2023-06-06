@@ -5,7 +5,7 @@ use crate::{
     KlangError,
 };
 use std::collections::HashMap;
-pub type Function = (Type, Vec<OpCode>, Vec<(String, Type)>);
+pub type Function = (Vec<OpCode>, Vec<String>);
 #[derive(Debug, Clone)]
 pub struct VM<'a> {
     pub chunk: Chunk,
@@ -32,7 +32,7 @@ impl<'a> VM<'a> {
             // println!("{:?}", self.global);
             match self.chunk.code[self.index as usize].clone() {
                 OpCode::Constant(x) => self.push(x),
-                OpCode::Store(x, y) => self.set_var(x, y),
+                OpCode::Store(x) => self.set_var(x),
                 OpCode::Load(x) => {
                     let var = match VM::get_var(&x, &mut self.global).0 {
                         Some(x) => x,
@@ -63,7 +63,7 @@ impl<'a> VM<'a> {
                     }
                     self.index += x;
                 }
-                OpCode::JumpIf(x) => {
+                OpCode::JumpIf(x, _) => {
                     if let Value::Bool(true) = self.top() {
                         if self.index + x > self.chunk.code.len() as i32 {
                             self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
@@ -82,7 +82,7 @@ impl<'a> VM<'a> {
                 OpCode::EndScope => self.close_inner(),
                 OpCode::Return => self.error("return can only appear inside functions"),
                 OpCode::For => self.for_loop(),
-                OpCode::Fn(t) => self.function(t),
+                OpCode::Fn => self.function(),
                 OpCode::Eof => {}
             }
             self.index += 1;
@@ -92,7 +92,7 @@ impl<'a> VM<'a> {
         //executes the code on the chunk
         match opcode.clone() {
             OpCode::Constant(x) => self.push(x),
-            OpCode::Store(x, y) => self.set_var(x, y),
+            OpCode::Store(x) => self.set_var(x),
             OpCode::Load(x) => {
                 let var = match VM::get_var(&x, &mut self.global).0 {
                     Some(x) => x,
@@ -123,8 +123,15 @@ impl<'a> VM<'a> {
                 }
                 index += x;
             }
-            OpCode::JumpIf(x) => {
-                if let Value::Bool(true) = self.top() {
+            OpCode::JumpIf(x, y) => {
+                if y {
+                    if let Value::Bool(true) = self.pop() {
+                        if index + x > self.chunk.code.len() as i32 {
+                            self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
+                        }
+                        index += x;
+                    }
+                } else if let Value::Bool(true) = self.top() {
                     if index + x > self.chunk.code.len() as i32 {
                         self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
                     }
@@ -143,17 +150,17 @@ impl<'a> VM<'a> {
             OpCode::EndScope => self.close_inner(),
             OpCode::Return => self.error("return can only appear inside functions"),
             OpCode::For => self.for_loop(),
-            OpCode::Fn(t) => self.function(t),
+            OpCode::Fn => self.function(),
             OpCode::Eof => {}
         };
         index
     }
-    fn function(&mut self, t: Type) {
+    fn function(&mut self) {
         self.index += 1; //consume fn
-        let mut args: Vec<(String, Type)> = Vec::new();
+        let mut args: Vec<String> = Vec::new();
         while match self.chunk.code[self.index as usize].clone() {
-            OpCode::Store(x, y) => {
-                args.push((x, y));
+            OpCode::Store(x) => {
+                args.push(x);
                 true
             }
             _ => false,
@@ -175,7 +182,7 @@ impl<'a> VM<'a> {
         }
         self.index += 1;
         match self.chunk.code[self.index as usize].clone() {
-            OpCode::Store(x, _) => self.functions.insert(x, (t, bytes, args)),
+            OpCode::Store(x) => self.functions.insert(x, (bytes, args)),
             _ => {
                 self.error("ksang made a little oopsy");
                 panic!();
@@ -183,7 +190,54 @@ impl<'a> VM<'a> {
         };
     }
     fn range(&mut self, cstep: bool) {
-        //push to stack the amount of values and then the values? ngl i have no idea :D but who tf uses range without a for?
+        if cstep {
+            let step = match self.pop() {
+                Value::Number(x) => x,
+                _ => {
+                    self.error("step is not a number");
+                    panic!()
+                }
+            };
+            let end = match self.pop() {
+                Value::Number(x) => x,
+                _ => {
+                    self.error("end is not a number");
+                    panic!()
+                }
+            };
+            let start = match self.pop() {
+                Value::Number(x) => x,
+                _ => {
+                    self.error("start is not a number");
+                    panic!()
+                }
+            };
+            let mut vec: Vec<Value> = Vec::new();
+            for i in (start as usize..end as usize).step_by(step as usize) {
+                vec.push(Value::Number(i as f64));
+            }
+            self.push(Value::Vec(vec))
+        } else {
+            let end = match self.pop() {
+                Value::Number(x) => x,
+                _ => {
+                    self.error("end is not a number");
+                    panic!()
+                }
+            };
+            let start = match self.pop() {
+                Value::Number(x) => x,
+                _ => {
+                    self.error("start is not a number");
+                    panic!()
+                }
+            };
+            let mut vec: Vec<Value> = Vec::new();
+            for i in start as usize..end as usize {
+                vec.push(Value::Number(i as f64));
+            }
+            self.push(Value::Vec(vec))
+        }
     }
     fn for_loop(&mut self) {
         //opcodes list:
@@ -195,6 +249,7 @@ impl<'a> VM<'a> {
         //jump
     }
     fn print(&mut self) {
+        println!("{:?}", self.global);
         let mut print = match self.pop() {
             Value::String {
                 string,
@@ -210,9 +265,9 @@ impl<'a> VM<'a> {
                     string,
                     printables: _,
                 } => string,
-                Value::Int(x) => x.to_string(),
+                Value::Number(x) => x.to_string(),
                 Value::Bool(x) => x.to_string(),
-                Value::Float(x) => x.to_string(),
+                Value::Vec(x) => format!("{:?}", x),
                 Value::None => "None".to_string(),
             };
             print = self.replace_last_braces(print.as_str(), repl.as_str());
@@ -255,34 +310,32 @@ impl<'a> VM<'a> {
             let i = VM::get_var(name, scope.inner.as_mut().unwrap());
             if !i.1 {
                 return match scope.callframe.get(name) {
-                    Some(val) => (Some(val.0.clone()), true),
+                    Some(val) => (Some(val.clone()), true),
                     None => (None, false),
                 };
             }
             return i;
         }
         match scope.callframe.get(name) {
-            Some(val) => (Some(val.0.clone()), true),
+            Some(val) => (Some(val.clone()), true),
             None => (None, false),
         }
     }
-    fn set_var(&mut self, name: String, r#type: Type) {
+    fn set_var(&mut self, name: String) {
         //sets a variable in the most inner scope, to the top value of the stack
         let mut scope: &mut Scope = &mut self.global;
         while scope.inner.is_some() {
             scope = scope.inner.as_mut().unwrap();
         }
-        scope
-            .callframe
-            .insert(name, (scope.stack.pop().unwrap(), r#type));
+        scope.callframe.insert(name, scope.stack.pop().unwrap());
     }
-    fn set_var_(&mut self, name: String, r#type: Type, val: Value) {
+    fn set_var_(&mut self, name: String, val: Value) {
         //sets a variable in the most inner scope, to the top value of the stack
         let mut scope: &mut Scope = &mut self.global;
         while scope.inner.is_some() {
             scope = scope.inner.as_mut().unwrap();
         }
-        scope.callframe.insert(name, (val, r#type));
+        scope.callframe.insert(name, val);
     }
     fn create_inner(&mut self) {
         let mut scope: &mut Scope = &mut self.global;
@@ -311,52 +364,41 @@ impl<'a> VM<'a> {
         let pop2 = self.pop2();
         self.push(match operation {
             TokenType::Plus => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Int(x + y),
-                (Value::Float(x), Value::Float(y)) => Value::Float(x + y),
+                (Value::Number(x), Value::Number(y)) => Value::Number(x + y),
                 _ => {
-                    self.error("can only add ints and floats");
+                    self.error("can only add numbers");
                     panic!()
                 }
             },
             TokenType::Minus => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Int(y - x),
-                (Value::Float(x), Value::Float(y)) => Value::Float(y - x),
+                (Value::Number(x), Value::Number(y)) => Value::Number(y - x),
                 _ => {
-                    self.error("can only subtract ints and floats");
+                    self.error("can only subtract numbers");
                     panic!()
                 }
             },
             TokenType::Star => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Int(x * y),
-                (Value::Float(x), Value::Float(y)) => Value::Float(x * y),
+                (Value::Number(x), Value::Number(y)) => Value::Number(x * y),
                 _ => {
-                    self.error("can only multiply ints and floats");
+                    self.error("can only multiply numbers");
                     panic!()
                 }
             },
             TokenType::Slash => match pop2 {
-                (Value::Int(x), Value::Int(y)) => {
-                    if x == 0 {
-                        self.error("division by zero");
-                        panic!()
-                    }
-                    Value::Int(y / x)
-                }
-                (Value::Float(x), Value::Float(y)) => {
+                (Value::Number(x), Value::Number(y)) => {
                     if x == 0.0 {
                         self.error("division by zero");
                         panic!()
                     }
-                    Value::Float(y / x)
+                    Value::Number(y / x)
                 }
                 _ => {
-                    self.error("can only divide ints and floats");
+                    self.error("can only divide numbers");
                     panic!()
                 }
             },
             TokenType::EqualEqual => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Bool(x == y),
-                (Value::Float(x), Value::Float(y)) => Value::Bool(x == y),
+                (Value::Number(x), Value::Number(y)) => Value::Bool(x == y),
                 (Value::Bool(x), Value::Bool(y)) => Value::Bool(x == y),
                 (Value::String { string: x, .. }, Value::String { string: y, .. }) => {
                     Value::Bool(x == y)
@@ -364,8 +406,7 @@ impl<'a> VM<'a> {
                 _ => Value::Bool(false),
             },
             TokenType::BangEqual => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Bool(x != y),
-                (Value::Float(x), Value::Float(y)) => Value::Bool(x != y),
+                (Value::Number(x), Value::Number(y)) => Value::Bool(x != y),
                 (Value::Bool(x), Value::Bool(y)) => Value::Bool(x != y),
                 (Value::String { string: x, .. }, Value::String { string: y, .. }) => {
                     Value::Bool(x != y)
@@ -373,34 +414,30 @@ impl<'a> VM<'a> {
                 _ => Value::Bool(true),
             },
             TokenType::Less => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Bool(x > y),
-                (Value::Float(x), Value::Float(y)) => Value::Bool(x > y),
+                (Value::Number(x), Value::Number(y)) => Value::Bool(x > y),
                 _ => {
-                    self.error("can only compare ints and floats");
+                    self.error("can only compare numbers");
                     panic!()
                 }
             },
             TokenType::LessEqual => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Bool(x >= y),
-                (Value::Float(x), Value::Float(y)) => Value::Bool(x >= y),
+                (Value::Number(x), Value::Number(y)) => Value::Bool(x >= y),
                 _ => {
-                    self.error("can only compare ints and floats");
+                    self.error("can only compare numbers");
                     panic!()
                 }
             },
             TokenType::Greater => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Bool(x < y),
-                (Value::Float(x), Value::Float(y)) => Value::Bool(x < y),
+                (Value::Number(x), Value::Number(y)) => Value::Bool(x < y),
                 _ => {
-                    self.error("can only compare ints and floats");
+                    self.error("can only compare numbers");
                     panic!()
                 }
             },
             TokenType::GreaterEqual => match pop2 {
-                (Value::Int(x), Value::Int(y)) => Value::Bool(x <= y),
-                (Value::Float(x), Value::Float(y)) => Value::Bool(x <= y),
+                (Value::Number(x), Value::Number(y)) => Value::Bool(x <= y),
                 _ => {
-                    self.error("can only compare ints and floats");
+                    self.error("can only compare numbers");
                     panic!()
                 }
             },
@@ -435,8 +472,7 @@ impl<'a> VM<'a> {
                 }
             },
             TokenType::Minus => match pop {
-                Value::Float(x) => Value::Float(-x),
-                Value::Int(x) => Value::Int(-x),
+                Value::Number(x) => Value::Number(-x),
                 _ => {
                     self.error("can only use minus on ints and floats");
                     panic!()
@@ -466,7 +502,7 @@ impl<'a> VM<'a> {
         };
         self.create_inner();
         self.functions.insert(callee, fun.clone());
-        for i in fun.2.into_iter().rev() {
+        for i in fun.1.into_iter().rev() {
             let mut scope = &mut self.global;
             for _ in 0..depth {
                 scope = scope.inner.as_mut().unwrap();
@@ -478,11 +514,11 @@ impl<'a> VM<'a> {
                     panic!();
                 }
             };
-            self.set_var_(i.0, i.1, pop);
+            self.set_var_(i, pop);
         }
         let mut i: i32 = 0;
-        while fun.1.len() > i as usize {
-            if matches!(fun.1[i as usize], OpCode::Return) {
+        while fun.0.len() > i as usize {
+            if matches!(fun.0[i as usize], OpCode::Return) {
                 let val = self.pop();
                 self.close_inner();
                 let mut scope = &mut self.global;
@@ -492,8 +528,8 @@ impl<'a> VM<'a> {
                 scope.stack.push(val);
                 return counter;
             }
-            i += self.execute_single(&fun.1[i as usize], index, depth) - index + 1;
-            println!("{} {:?} {:?}", depth, fun.1[i as usize], self.global);
+            i += self.execute_single(&fun.0[i as usize], index, depth) - index + 1;
+            println!("{} {:?} {:?}", depth, fun.0[i as usize], self.global);
         }
         self.close_inner();
         counter
@@ -537,17 +573,8 @@ impl<'a> VM<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub enum Type {
-    Int,
-    Float,
-    String,
-    Bool,
-    None,
-}
-
-#[derive(Debug, Clone)]
 pub struct Scope {
-    pub callframe: HashMap<String, (Value, Type)>,
+    pub callframe: HashMap<String, Value>,
     pub inner: Option<Box<Scope>>,
     pub stack: Vec<Value>,
 }

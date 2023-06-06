@@ -1,12 +1,5 @@
-//fn int add(int1: int, int2: int) {
-//    return int2 - int1;
-//}
-//print("adding 2 integers: {add(5, 6)}");
-fn fibonacci(n: int) {
-    if n <= 1 {
-        return n;
-    }
-    return fibonacci(n - 1) + fibonacci(n - 2);
+fn add(int1, int2) {
+    return int1 + int2;
 }
-
-print("fib: {fibonacci(3)}");
+print("adding 2 integers: {add(8, 3)}");
+print("{}");

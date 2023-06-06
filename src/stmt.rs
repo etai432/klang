@@ -15,7 +15,6 @@ pub enum Stmt {
     },
     Var {
         name: Token,
-        t: Token,
         value: Option<Expr>,
     },
     While {
@@ -30,9 +29,8 @@ pub enum Stmt {
         line: usize,
     },
     Fn {
-        return_t: Option<Token>,
         name: Token,
-        params: Vec<(Token, Token)>,
+        params: Vec<Token>,
         body: Box<Stmt>,
     },
     Return(Expr, usize),
