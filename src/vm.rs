@@ -27,98 +27,101 @@ impl<'a> VM<'a> {
     pub fn run(&mut self) {
         //executes the code on the chunk
         while self.index < self.chunk.code.len() as i32 {
-            // print!("{:?} ", self.chunk.code[self.index as usize]);
-            // println!("{:?}", self.global);
-            match self.chunk.code[self.index as usize].clone() {
-                OpCode::Constant(x) => self.push(x),
-                OpCode::Store(x) => self.set_var(x),
-                OpCode::Load(x) => {
-                    let var = match VM::get_var(&x, &mut self.global).0 {
+            self.once();
+            self.index += 1;
+        }
+    }
+    pub fn once(&mut self) {
+        // print!("{:?} ", self.chunk.code[self.index as usize]);
+        // println!("{:?}", self.global);
+        match self.chunk.code[self.index as usize].clone() {
+            OpCode::Constant(x) => self.push(x),
+            OpCode::Store(x) => self.set_var(x),
+            OpCode::Load(x) => {
+                let var = match VM::get_var(&x, &mut self.global).0 {
+                    Some(x) => x,
+                    None => {
+                        self.error(format!("variable \"{x}\" do not exist").as_str());
+                        panic!()
+                    }
+                };
+                self.push(var);
+            }
+            OpCode::Add => self.bin_op(TokenType::Plus),
+            OpCode::Subtract => self.bin_op(TokenType::Minus),
+            OpCode::Multiply => self.bin_op(TokenType::Star),
+            OpCode::Divide => self.bin_op(TokenType::Slash),
+            OpCode::Modulo => self.bin_op(TokenType::Modulo),
+            OpCode::EqualEqual => self.bin_op(TokenType::EqualEqual),
+            OpCode::NotEqual => self.bin_op(TokenType::BangEqual),
+            OpCode::Less => self.bin_op(TokenType::Less),
+            OpCode::LessEqual => self.bin_op(TokenType::LessEqual),
+            OpCode::Greater => self.bin_op(TokenType::Greater),
+            OpCode::GreaterEqual => self.bin_op(TokenType::GreaterEqual),
+            OpCode::LogicalAnd => self.bin_op(TokenType::And),
+            OpCode::LogicalOr => self.bin_op(TokenType::Or),
+            OpCode::LogicalNot => self.un_op(TokenType::Bang),
+            OpCode::Negate => self.un_op(TokenType::Minus),
+            OpCode::Jump(x) => {
+                if self.index + x > self.chunk.code.len() as i32 {
+                    self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
+                }
+                self.index += x;
+            }
+            OpCode::JumpIf(x, t) => {
+                if t {
+                    if let Value::Bool(true) = match self.pop() {
                         Some(x) => x,
                         None => {
-                            self.error(format!("variable \"{x}\" do not exist").as_str());
+                            self.error("stack overflow (cant pop an empty stack)");
                             panic!()
                         }
-                    };
-                    self.push(var);
-                }
-                OpCode::Add => self.bin_op(TokenType::Plus),
-                OpCode::Subtract => self.bin_op(TokenType::Minus),
-                OpCode::Multiply => self.bin_op(TokenType::Star),
-                OpCode::Divide => self.bin_op(TokenType::Slash),
-                OpCode::Modulo => self.bin_op(TokenType::Modulo),
-                OpCode::EqualEqual => self.bin_op(TokenType::EqualEqual),
-                OpCode::NotEqual => self.bin_op(TokenType::BangEqual),
-                OpCode::Less => self.bin_op(TokenType::Less),
-                OpCode::LessEqual => self.bin_op(TokenType::LessEqual),
-                OpCode::Greater => self.bin_op(TokenType::Greater),
-                OpCode::GreaterEqual => self.bin_op(TokenType::GreaterEqual),
-                OpCode::LogicalAnd => self.bin_op(TokenType::And),
-                OpCode::LogicalOr => self.bin_op(TokenType::Or),
-                OpCode::LogicalNot => self.un_op(TokenType::Bang),
-                OpCode::Negate => self.un_op(TokenType::Minus),
-                OpCode::Jump(x) => {
-                    if self.index + x > self.chunk.code.len() as i32 {
-                        self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
-                    }
-                    self.index += x;
-                }
-                OpCode::JumpIf(x, t) => {
-                    if t {
-                        if let Value::Bool(true) = match self.pop() {
-                            Some(x) => x,
-                            None => {
-                                self.error("stack overflow (cant pop an empty stack)");
-                                panic!()
-                            }
-                        } {
-                            if self.index + x > self.chunk.code.len() as i32 {
-                                self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
-                            }
-                            self.index += x;
-                        }
-                    } else if let Value::Bool(true) = self.top() {
+                    } {
                         if self.index + x > self.chunk.code.len() as i32 {
                             self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
                         }
                         self.index += x;
                     }
-                }
-                OpCode::Call(x) => {
-                    self.call(x, self.index);
-                }
-                OpCode::NativeCall(x) => self.native_call(x),
-                OpCode::Print => self.print(),
-                OpCode::Range(x) => self.range(x),
-                OpCode::Scope => {self.create_inner()}
-                OpCode::EndScope => {self.close_inner()}
-                OpCode::EndFn => {}
-                OpCode::Return => {
-                    let val = match self.pop() {
-                        Some(x) => x,
-                        None => Value::None,
-                    };
-                    let mut counter = 1;
-                    while !matches!(self.chunk.code[self.index as usize], OpCode::EndFn) {
-                        self.index += 1;
-                        if matches!(self.chunk.code[self.index as usize], OpCode::Scope) {
-                            counter -= 1;
-                        }
-                        if matches!(self.chunk.code[self.index as usize], OpCode::EndScope) {
-                            counter += 1;
-                        }
+                } else if let Value::Bool(true) = self.top() {
+                    if self.index + x > self.chunk.code.len() as i32 {
+                        self.error("cannot jump out of bounds like ur dad jumped out of the 50th story window bozo");
                     }
-                    for _ in 0..counter {
-                        self.close_inner()
-                    }
-                    self.push(val);
+                    self.index += x;
                 }
-                OpCode::For => self.for_loop(),
-                OpCode::Fn => self.function(),
-                OpCode::Iterable(x) => self.iterable(x),
-                OpCode::Eof => {}
             }
-            self.index += 1;
+            OpCode::Call(x) => {
+                self.call(x, self.index);
+            }
+            OpCode::NativeCall(x) => self.native_call(x),
+            OpCode::Print => self.print(),
+            OpCode::Range(x) => self.range(x),
+            OpCode::Scope => {self.create_inner()}
+            OpCode::EndScope => {self.close_inner()}
+            OpCode::EndFn => {}
+            OpCode::Return => {
+                let val = match self.pop() {
+                    Some(x) => x,
+                    None => Value::None,
+                };
+                let mut counter = 1;
+                while !matches!(self.chunk.code[self.index as usize], OpCode::EndFn) {
+                    self.index += 1;
+                    if matches!(self.chunk.code[self.index as usize], OpCode::Scope) {
+                        counter -= 1;
+                    }
+                    if matches!(self.chunk.code[self.index as usize], OpCode::EndScope) {
+                        counter += 1;
+                    }
+                }
+                for _ in 0..counter {
+                    self.close_inner()
+                }
+                self.push(val);
+            }
+            OpCode::For => self.for_loop(),
+            OpCode::Fn => self.function(),
+            OpCode::Iterable(x) => self.iterable(x),
+            OpCode::Eof => {}
         }
     }
     fn iterable(&mut self, x: i32) {
