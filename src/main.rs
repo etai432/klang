@@ -1,52 +1,48 @@
 use error::KlangError;
 // use opcode::OpCode;
-use scanner::Token;
 use std::path::Path;
 // use std::time::Instant;
-use std::time::SystemTime;
+// use std::time::SystemTime;
 use std::{env, fs};
-mod compiler;
+mod compiling;
+use compiling::{compiler, vm};
 mod error;
-mod expr;
-mod opcode;
-mod parser;
-mod scanner;
-mod stmt;
-mod vm;
+mod interpreter;
+use interpreter::{parser, scanner};
 
-macro_rules! timeit {
-    ($($todo: stmt), *) => {
-        let start = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-        $(
-            $todo
-        )*
-        let end = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-        let sec = end.as_secs() - start.as_secs();
-        if sec >= 1 {
-            if sec > 60 {
-                println!("timeit result: {} minutes and {} seconds", sec % 60, sec / 60);
-            }
-            else {
-                println!("timeit results: {} seconds", sec);
-            }
-        }
-        else {
-            let millis = end.as_millis() - start.as_millis();
-            if millis >= 1 {
-                println!("timeit results: {} milliseconds", millis);
-            }
-            else {
-                let micros = end.as_micros() - start.as_micros();
-                if micros >= 1 {
-                    println!("timeit results: {} microseconds", micros);
-                }
-                else{
-                    println!("timeit results: {} nanoseconds", end.as_nanos() - start.as_nanos())
-                }
-            }
-        }
-    };
-}
+// macro_rules! timeit {
+//     ($($todo: stmt), *) => {
+//         let start = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+//         $(
+//             $todo
+//         )*
+//         let end = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+//         let sec = end.as_secs() - start.as_secs();
+//         if sec >= 1 {
+//             if sec > 60 {
+//                 println!("timeit result: {} minutes and {} seconds", sec % 60, sec / 60);
+//             }
+//             else {
+//                 println!("timeit results: {} seconds", sec);
+//             }
+//         }
+//         else {
+//             let millis = end.as_millis() - start.as_millis();
+//             if millis >= 1 {
+//                 println!("timeit results: {} milliseconds", millis);
+//             }
+//             else {
+//                 let micros = end.as_micros() - start.as_micros();
+//                 if micros >= 1 {
+//                     println!("timeit results: {} microseconds", micros);
+//                 }
+//                 else{
+//                     println!("timeit results: {} nanoseconds", end.as_nanos() - start.as_nanos())
+//                 }
+//             }
+//         }
+//     };
+// }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -129,8 +125,7 @@ fn main() {
 fn run_file(path: &str, relfilename: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
-    let tokens: Vec<Token> = scanner.scan_tokens();
-    let mut parser = parser::Parser::new(tokens, relfilename);
+    let mut parser = parser::Parser::new(scanner.scan_tokens(), relfilename);
     let ast = parser.parse();
     // println!("{:?}", ast);
     // let start_time = Instant::now();

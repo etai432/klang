@@ -1,9 +1,6 @@
-use crate::{
-    compiler::Chunk,
-    opcode::OpCode,
-    scanner::{TokenType, Value},
-    KlangError,
-};
+use super::{compiler::Chunk, opcode::OpCode};
+use crate::interpreter::scanner::{TokenType, Value};
+use crate::KlangError;
 use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct VM<'a> {

@@ -1,10 +1,10 @@
 #![allow(unused)]
 
+use super::expr::Expr;
+use super::stmt::Stmt;
 use crate::error::KlangError;
-use crate::expr::Expr;
 use crate::scanner::Scanner;
 use crate::scanner::{Token, TokenType, Value};
-use crate::stmt::Stmt;
 
 pub struct Parser<'a> {
     pub tokens: Vec<Token>,
@@ -74,7 +74,10 @@ impl<'a> Parser<'a> {
             };
         }
         self.consume(TokenType::Semicolon, "missing ; at the end of the line");
-        Stmt::Var { name, value: None }
+        Stmt::Var {
+            name,
+            value: None::<Expr>,
+        }
     }
 
     fn statement(&mut self) -> Stmt {

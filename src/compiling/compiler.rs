@@ -1,7 +1,7 @@
-use crate::expr::Expr;
-use crate::opcode::OpCode;
+use super::opcode::OpCode;
+use crate::interpreter::expr::Expr;
+use crate::interpreter::stmt::Stmt;
 use crate::scanner::{TokenType, Value};
-use crate::stmt::Stmt;
 
 #[derive(Debug, Clone)]
 pub struct Chunk {
