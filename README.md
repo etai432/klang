@@ -28,10 +28,10 @@ Klang is a statically-typed programming language interpreted using Rust.
 - meaning you can print anything you want using 1 print statement! for example: `print("3 pi is: {3 * pi()}")`
 - Error handling: Klang does not feature explicit error handling. Errors are handled by the parser, scanner, and compiler, and reported to the developer in the terminal.
 - Functions: All functions in Klang are public.
-fn name(arg1: type, arg2: type) {
+`fn name(arg1: type, arg2: type) {
     code
     return value; (or return; to just quit the function without returning anything)
-}
+}`
 - Example:
 ```klang
 fn add(int1: int, int2: int) {
