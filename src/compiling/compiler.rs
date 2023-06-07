@@ -213,7 +213,6 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
         }
         Expr::Call { callee, arguments } => {
             let line;
-            let len = arguments.len() as i32;
             for arg_expr in arguments {
                 dump(&mut code, &mut lines, compile_expr(arg_expr));
             }
