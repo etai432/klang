@@ -21,6 +21,6 @@ term => factor ( ( "-" | "+" ) term )? ;
 factor => range ( ( "/" | "*" ) factor )? ;
 range => unary(".."unary(".."unary)?)?;
 unary => ( "!" | "-" ) primary | call ;
-call => primary "(" expression? ( "," expression )* ")" ; // call may handle structs (struct.field) in the future
+call => primary "(" expression? ( "," expression )* ")" ;
 primary => Value | "(" logical ")" | identifier | NativeCall ;
 NativeCall => "std::" call ;

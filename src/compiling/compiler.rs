@@ -16,14 +16,6 @@ impl Chunk {
             lines: stuff.1,
         }
     }
-    pub fn disassemble(&self) {
-        for (num, instruction) in self.code.iter().enumerate() {
-            println!("{:04} {}", num, instruction);
-        }
-    }
-    // pub fn disassemble_byte(&self, num: usize) {
-    //     println!("{:04} {:?}", num, self.code[num]);
-    // }
 }
 
 pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
@@ -72,10 +64,7 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 lines.push(line.0);
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
-                code.push(OpCode::JumpIf(
-                    blok.0.len() as i32 - 1,
-                    !elseblock.is_some(),
-                ));
+                code.push(OpCode::JumpIf(blok.0.len() as i32 - 1, elseblock.is_none()));
                 lines.push(line.0);
                 dump(&mut code, &mut lines, blok);
                 code.pop();

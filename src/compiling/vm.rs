@@ -34,8 +34,6 @@ impl<'a> VM<'a> {
         }
     }
     pub fn once(&mut self) {
-        // print!("{:?} ", self.chunk.code[self.index as usize]);
-        // println!("{:?}", self.global);
         match self.chunk.code[self.index as usize].clone() {
             OpCode::Constant(x) => self.push(x),
             OpCode::Store(x) => self.set_var(x),
