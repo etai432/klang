@@ -3,7 +3,7 @@ use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum OpCode {
-    Constant(Value),    //Load a constant value onto the stack
+    Constant(Value),         //Load a constant value onto the stack
     Store(String), // Store the value from the top of the stack into the variable in the hashtable.
     Load(String),  //Load the value of the variable from the hashtable onto the stack
     Add,           // Performs addition on the last two values on the stack.
@@ -24,7 +24,7 @@ pub enum OpCode {
     Jump(i32),    // Unconditionally jumps to a specified instruction address.
     JumpIf(i32, bool), // Jumps to a specified instruction address if the last value on the stack is true.
     Call(String),      // Calls a function at a specified instruction address.
-    NativeCall(String), // Calls a native function or external function.
+    NativeCall(String, i32), // Calls a native function or external function.
     Print,             // Prints the last value on the stack to the console or output stream.
     Range(bool),
     Scope,
@@ -136,7 +136,7 @@ impl fmt::Display for OpCode {
             OpCode::Jump(x) => write!(f, "Jump {}", x),
             OpCode::JumpIf(x, y) => write!(f, "JumpIf {} {}", x, y),
             OpCode::Call(x) => write!(f, "Call {}", x),
-            OpCode::NativeCall(x) => write!(f, "NativeCall {}", x),
+            OpCode::NativeCall(x, y) => write!(f, "NativeCall {} {}", x, y),
             OpCode::Print => write!(f, "Print"),
             OpCode::Range(x) => write!(f, "Range {}", x),
             OpCode::Scope => write!(f, "Scope"),

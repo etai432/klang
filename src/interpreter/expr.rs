@@ -14,6 +14,7 @@ pub enum Expr {
     Call {
         callee: Box<Expr>,
         arguments: Vec<Expr>,
+        native: bool,
     },
     Grouping(Box<Expr>), // "(" expression ")"
     Literal(Value, usize),

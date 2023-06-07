@@ -1,14 +1,18 @@
-use super::{compiler::Chunk, opcode::OpCode};
+use super::{
+    compiler::Chunk,
+    native::{create_natives, NativeFn},
+    opcode::OpCode,
+};
 use crate::interpreter::scanner::{TokenType, Value};
 use crate::KlangError;
 use std::collections::HashMap;
-#[derive(Debug, Clone)]
 pub struct VM<'a> {
     pub chunk: Chunk,
     pub global: Scope,
     pub index: i32,
     pub filename: &'a str,
     pub functions: HashMap<String, (Vec<OpCode>, Vec<String>)>,
+    pub native: Vec<NativeFn>,
 }
 
 impl<'a> VM<'a> {
@@ -19,6 +23,7 @@ impl<'a> VM<'a> {
             index: 0,
             filename,
             functions: HashMap::new(),
+            native: create_natives(),
         }
     }
     pub fn run(&mut self) {
@@ -89,7 +94,7 @@ impl<'a> VM<'a> {
             OpCode::Call(x) => {
                 self.call(x, self.index);
             }
-            OpCode::NativeCall(x) => self.native_call(x),
+            OpCode::NativeCall(x, y) => self.native_call(x, y),
             OpCode::Print => self.print(),
             OpCode::Range(x) => self.range(x),
             OpCode::Scope => self.create_inner(),
@@ -347,17 +352,21 @@ impl<'a> VM<'a> {
     }
     fn set_var(&mut self, name: String) {
         //sets a variable in the most inner scope, to the top value of the stack
+        let pop = match self.pop() {
+            Some(x) => x,
+            None => Value::None,
+        };
         let mut scope: &mut Scope = &mut self.global;
         while scope.inner.is_some() {
+            if let std::collections::hash_map::Entry::Occupied(mut e) =
+                scope.callframe.entry(name.clone())
+            {
+                e.insert(pop);
+                return;
+            }
             scope = scope.inner.as_mut().unwrap();
         }
-        scope.callframe.insert(
-            name,
-            match scope.stack.pop() {
-                Some(x) => x,
-                None => Value::None,
-            },
-        );
+        scope.callframe.insert(name, pop);
     }
     fn create_inner(&mut self) {
         let mut scope: &mut Scope = &mut self.global;
@@ -558,7 +567,43 @@ impl<'a> VM<'a> {
         }
         self.chunk.code.insert(b, OpCode::EndFn);
     }
-    fn native_call(&mut self, callee: String) {}
+    fn native_call(&mut self, callee: String, arg_num: i32) {
+        let mut found = false;
+        for i in 0..self.native.len() {
+            if self.native[i].name == callee {
+                if arg_num != self.native[i].args {
+                    self.error(
+                        format!(
+                            "the function takes {} arguments but you only gave it {arg_num}",
+                            self.native[i].args
+                        )
+                        .as_str(),
+                    )
+                }
+                let mut args: Vec<Value> = Vec::new();
+                for _ in 0..arg_num {
+                    args.insert(
+                        0,
+                        match self.pop() {
+                            Some(x) => x,
+                            None => {
+                                self.error("not enough arguments!");
+                                panic!()
+                            }
+                        },
+                    )
+                }
+                if let Some(x) = self.native[i].call(args) {
+                    self.push(x)
+                }
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            self.error("not a real native function dumbass");
+        }
+    }
 
     fn pop2(&mut self) -> (Value, Value) {
         (

@@ -1,3 +1,1 @@
-then uh maybe we can create some native functions and an std.
-std lib will contain: advanced types, advanced math functions, random functions, time functions, file functions.
-add cock
+KLANG IS FINISHED

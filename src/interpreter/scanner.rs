@@ -240,6 +240,19 @@ impl<'a> Scanner<'a> {
                 self.line,
                 Some(Value::Bool(false)),
             ),
+            "std" => {
+                if self.chars.next().unwrap() == ':' && self.chars.next().unwrap() == ':' {
+                    self.make_token(TokenType::NativeCall, "".to_string(), self.line, None)
+                } else {
+                    error::KlangError::error(
+                        KlangError::ScannerError,
+                        "cannot use std without calling a native fn",
+                        self.line,
+                        self.filename,
+                    );
+                    self.had_error = true;
+                }
+            }
             _ => self.make_token(TokenType::Identifier, word, self.line, None),
         }
     }
@@ -419,6 +432,7 @@ pub enum TokenType {
     Fn,
     Return,
     Printable,
+    NativeCall,
     Eof,
 }
 
@@ -466,6 +480,7 @@ impl fmt::Display for TokenType {
             TokenType::Return => write!(f, "return"),
             TokenType::Eof => write!(f, "Eof"),
             TokenType::Printable => write!(f, "Printable"),
+            TokenType::NativeCall => write!(f, "NativeCall"),
         }
     }
 }

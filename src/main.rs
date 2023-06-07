@@ -126,6 +126,7 @@ fn run_file(path: &str, relfilename: &str) {
     let source = fs::read_to_string(path).expect("failed to read file");
     let mut scanner = scanner::Scanner::new(&source, relfilename);
     let mut parser = parser::Parser::new(scanner.scan_tokens(), relfilename);
+    // println!("{:?}", parser.tokens);
     let ast = parser.parse();
     // println!("{:?}", ast);
     // let start_time = Instant::now();

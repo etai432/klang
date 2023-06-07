@@ -349,10 +349,10 @@ impl<'a> Parser<'a> {
                 expression: Box::new(e),
             };
         }
-        self.call()
+        self.call(false)
     }
 
-    fn call(&mut self) -> Expr {
+    fn call(&mut self, native: bool) -> Expr {
         let expr = self.primary();
         if self.match_tokens(&[TokenType::LeftParen]) {
             if !matches!(expr, Expr::Variable(_)) {
@@ -362,6 +362,7 @@ impl<'a> Parser<'a> {
                 return Expr::Call {
                     callee: Box::new(expr),
                     arguments: Vec::new(),
+                    native,
                 };
             }
             let mut vec: Vec<Expr> = Vec::new();
@@ -373,6 +374,7 @@ impl<'a> Parser<'a> {
             return Expr::Call {
                 callee: Box::new(expr),
                 arguments: vec,
+                native,
             };
         }
         expr
@@ -428,7 +430,9 @@ impl<'a> Parser<'a> {
             );
             return Expr::Grouping(Box::new(expression));
         }
-
+        if self.match_tokens(&[TokenType::NativeCall]) {
+            return self.call(true);
+        }
         if self.match_tokens(&[TokenType::Identifier]) {
             return Expr::Variable(self.previous());
         }

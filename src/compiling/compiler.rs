@@ -211,19 +211,38 @@ pub fn compile_expr(expr: Expr) -> (Vec<OpCode>, Vec<usize>) {
             code.push(bin(operator.tt));
             lines.push(operator.line)
         }
-        Expr::Call { callee, arguments } => {
+        Expr::Call {
+            callee,
+            arguments,
+            native,
+        } => {
             let line;
+            let len = arguments.len() as i32;
             for arg_expr in arguments {
                 dump(&mut code, &mut lines, compile_expr(arg_expr));
             }
-            code.push(OpCode::Call(match *callee {
-                Expr::Variable(t) => {
-                    lines.push(t.line);
-                    line = t.line;
-                    t.lexeme
-                }
-                _ => unreachable!(),
-            }));
+            if native {
+                code.push(OpCode::NativeCall(
+                    match *callee {
+                        Expr::Variable(t) => {
+                            lines.push(t.line);
+                            line = t.line;
+                            t.lexeme
+                        }
+                        _ => unreachable!(),
+                    },
+                    len,
+                ));
+            } else {
+                code.push(OpCode::Call(match *callee {
+                    Expr::Variable(t) => {
+                        lines.push(t.line);
+                        line = t.line;
+                        t.lexeme
+                    }
+                    _ => unreachable!(),
+                }));
+            }
             lines.push(line);
         }
         Expr::Grouping(expression) => dump(&mut code, &mut lines, compile_expr(*expression)),
