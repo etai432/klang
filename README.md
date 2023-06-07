@@ -11,14 +11,14 @@ Klang is a statically-typed programming language interpreted using Rust.
 - Control flow: Klang uses `<`, `>`, `<=`, `>=`, `==`, `&&`, `||` for control flow.
 - Arithmetic operations: Klang uses `+`, `-`, `*`, `/`, `%` for basic arithmetic operations.
 - If statement:
-if expression {
+`if expression {
     code
 } else {
     code
-}
+}`
 - Loops:
-- For loop: `for identifier in iterable { expr; }`
-- While loop: `while bool { expr; }`
+- For loop: `for identifier in iterable { code }`
+- While loop: `while bool { code; }`
 - Range:
 - `int..int` (exclusive)
 - `int..int..int3` (exclusive, with step size `int3`)
