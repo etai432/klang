@@ -1,13 +1,13 @@
 # Klang Language
 
-Klang is a statically-typed programming language interpreted using Rust.
+Klang is a dynamic programming language interpreted using Rust.
 
 ## Language Overview
 
 - Klang starts running from the first line of code.
 - Indentations are not mandatory, but it is strongly recommended to adhere to formal indentation rules for clean and readable code.
-- Klang has four simple types: bool, number, string, and vector. Characters are stored inside strings.
-- Variable declaration: Use `let identifier = value(?)` syntax.
+- Klang has four simple types: bool, number, string, and vector.
+- Variable declaration: Use `let identifier = value` syntax, variables do not require an initial value.
 - Control flow: Klang uses `<`, `>`, `<=`, `>=`, `==`, `&&`, `||` for control flow.
 - Arithmetic operations: Klang uses `+`, `-`, `*`, `/`, `%` for basic arithmetic operations.
 - If statement:
@@ -28,10 +28,8 @@ Klang is a statically-typed programming language interpreted using Rust.
 - meaning you can print anything you want using 1 print statement! for example: `print("3 pi is: {3 * pi()}")`
 - Error handling: Klang does not feature explicit error handling. Errors are handled by the parser, scanner, and compiler, and reported to the developer in the terminal.
 - Functions: All functions in Klang are public.
-`fn name(arg1: type, arg2: type) {
-    code
-    return value; (or return; to just quit the function without returning anything)
-}`
+- the way you declare a function is: `fn name(arg1, arg2) {`
+- you can then use return value; or return; to quit the function and return a value.
 - Example:
 ```klang
 fn add(int1: int, int2: int) {
