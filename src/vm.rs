@@ -98,25 +98,41 @@ impl<'a> VM<'a> {
             OpCode::Scope => self.create_inner(),
             OpCode::EndScope => self.close_inner(),
             OpCode::EndFn => {}
-            OpCode::Return => {
-                let val = match self.pop() {
-                    Some(x) => x,
-                    None => Value::None,
-                };
-                let mut counter = 1;
-                while !matches!(self.chunk.code[self.index as usize], OpCode::EndFn) {
-                    self.index += 1;
-                    if matches!(self.chunk.code[self.index as usize], OpCode::Scope) {
-                        counter -= 1;
+            OpCode::Return(x) => {
+                if x {
+                    let val = match self.pop() {
+                        Some(x) => x,
+                        None => Value::None,
+                    };
+                    let mut counter = 1;
+                    while !matches!(self.chunk.code[self.index as usize], OpCode::EndFn) {
+                        self.index += 1;
+                        if matches!(self.chunk.code[self.index as usize], OpCode::Scope) {
+                            counter -= 1;
+                        }
+                        if matches!(self.chunk.code[self.index as usize], OpCode::EndScope) {
+                            counter += 1;
+                        }
                     }
-                    if matches!(self.chunk.code[self.index as usize], OpCode::EndScope) {
-                        counter += 1;
+                    for _ in 0..counter {
+                        self.close_inner()
+                    }
+                    self.push(val);
+                } else {
+                    let mut counter = 1;
+                    while !matches!(self.chunk.code[self.index as usize], OpCode::EndFn) {
+                        self.index += 1;
+                        if matches!(self.chunk.code[self.index as usize], OpCode::Scope) {
+                            counter -= 1;
+                        }
+                        if matches!(self.chunk.code[self.index as usize], OpCode::EndScope) {
+                            counter += 1;
+                        }
+                    }
+                    for _ in 0..counter {
+                        self.close_inner()
                     }
                 }
-                for _ in 0..counter {
-                    self.close_inner()
-                }
-                self.push(val);
             }
             OpCode::For => self.for_loop(),
             OpCode::Fn => self.function(),

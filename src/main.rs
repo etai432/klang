@@ -1,10 +1,10 @@
 use error::KlangError;
-use opcode::OpCode;
+// use opcode::OpCode;
 use scanner::Token;
-use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::path::Path;
+// use std::time::Instant;
 use std::time::SystemTime;
-use std::{env, fs, fs::File};
+use std::{env, fs};
 mod compiler;
 mod error;
 mod expr;
@@ -138,7 +138,8 @@ fn run_file(path: &str, relfilename: &str) {
     // println!("timeit results: {:?}", start_time.elapsed());
     // chunk.disassemble();
     let mut vm = vm::VM::new(chunk, relfilename);
-    timeit!(vm.run());
+    // timeit!(vm.run());
+    vm.run();
 }
 
 // fn compile_file(path: &str, relfilename: &str) {

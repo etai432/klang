@@ -166,11 +166,17 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 code.push(OpCode::Store(name.lexeme));
                 lines.push(name.line);
             }
-            Stmt::Return(expr, line) => {
-                dump(&mut code, &mut lines, compile_expr(expr));
-                code.push(OpCode::Return);
-                lines.push(line)
-            }
+            Stmt::Return(expr, line) => match expr {
+                Some(expr) => {
+                    dump(&mut code, &mut lines, compile_expr(expr));
+                    code.push(OpCode::Return(true));
+                    lines.push(line)
+                }
+                None => {
+                    code.push(OpCode::Return(false));
+                    lines.push(line)
+                }
+            },
         }
     }
     code.push(OpCode::Eof);

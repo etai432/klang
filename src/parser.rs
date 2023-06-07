@@ -74,7 +74,7 @@ impl<'a> Parser<'a> {
             };
         }
         self.consume(TokenType::Semicolon, "missing ; at the end of the line");
-        return Stmt::Var { name, value: None };
+        Stmt::Var { name, value: None }
     }
 
     fn statement(&mut self) -> Stmt {
@@ -96,9 +96,12 @@ impl<'a> Parser<'a> {
     }
 
     fn return_stmt(&mut self) -> Stmt {
+        if self.match_tokens(&[TokenType::Semicolon]) {
+            return Stmt::Return(None, self.previous().line);
+        }
         let value = self.logical();
         self.consume(TokenType::Semicolon, "missing ; at the end of lien");
-        Stmt::Return(value, self.previous().line)
+        Stmt::Return(Some(value), self.previous().line)
     }
 
     fn for_stmt(&mut self) -> Stmt {
@@ -394,7 +397,7 @@ impl<'a> Parser<'a> {
             let mut printables_t: Vec<Vec<Token>> = Vec::new();
             while self.match_tokens(&[TokenType::Printable]) {
                 let lexeme = self.previous().lexeme;
-                if lexeme.contains("\"") {
+                if lexeme.contains('"') {
                     self.error("why would you use a string inside a string?? are you retarded??");
                 }
                 let mut s = Scanner::new(&lexeme, self.filename);

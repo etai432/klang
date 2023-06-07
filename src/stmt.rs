@@ -33,5 +33,5 @@ pub enum Stmt {
         params: Vec<Token>,
         body: Box<Stmt>,
     },
-    Return(Expr, usize),
+    Return(Option<Expr>, usize),
 }
