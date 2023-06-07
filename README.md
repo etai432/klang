@@ -32,7 +32,7 @@ Klang is a dynamic programming language interpreted using Rust.
 - you can then use return value; or return; to quit the function and return a value.
 - Example:
 ```klang
-fn add(int1: int, int2: int) {
+fn add(int1, int2) {
     return int1 + int2;
 }
 print("3 + 5 = {add(3, 5)}");
