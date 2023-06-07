@@ -24,11 +24,13 @@ Klang is a statically-typed programming language interpreted using Rust.
 - `int..int..int3` (exclusive, with step size `int3`)
 - Scoping: Klang uses `{}` for scoping.
 - I/O: Klang uses `print()` for output and `std::read()` for input.
+- klang allows custom format inside strings `"hi {1+2}"` would be `hi 3`, but dont allow recursive formatting (formatting inside formatting).
+- meaning you can print anything you want using 1 print statement! for example: `print("3 pi is: {3 * pi()}")`
 - Error handling: Klang does not feature explicit error handling. Errors are handled by the parser, scanner, and compiler, and reported to the developer in the terminal.
 - Functions: All functions in Klang are public.
 fn name(arg1: type, arg2: type) {
     code
-    return value; (or return;)
+    return value; (or return; to just quit the function without returning anything)
 }
 - Example:
 ```klang
