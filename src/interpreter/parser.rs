@@ -230,7 +230,7 @@ impl<'a> Parser<'a> {
         let left: Expr = self.equality();
         if self.match_tokens(&[TokenType::And, TokenType::Or]) {
             let operator = self.previous();
-            let right: Expr = self.equality();
+            let right: Expr = self.logical();
             return Expr::Binary {
                 left: Box::new(left),
                 operator,

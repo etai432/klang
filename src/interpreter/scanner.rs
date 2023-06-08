@@ -129,22 +129,15 @@ impl<'a> Scanner<'a> {
                         self.make_token(TokenType::Less, ch.to_string(), self.line, None)
                     }
                 }
-                '.' => {
-                    if self.is_next('.') {
+                '&' => {
+                    if self.is_next('&') {
                         let next = self.chars.next().unwrap();
                         self.make_token(
-                            TokenType::Range,
+                            TokenType::And,
                             String::from(ch) + &String::from(next),
                             self.line,
                             None,
-                        );
-                    } else {
-                        self.make_token(TokenType::Dot, ch.to_string(), self.line, None)
-                    }
-                }
-                '&' => {
-                    if self.is_next('&') {
-                        self.make_token(TokenType::And, ch.to_string(), self.line, None)
+                        )
                     } else {
                         error::KlangError::error(
                             KlangError::ScannerError,
@@ -157,7 +150,13 @@ impl<'a> Scanner<'a> {
                 }
                 '|' => {
                     if self.is_next('|') {
-                        self.make_token(TokenType::Or, ch.to_string(), self.line, None)
+                        let next = self.chars.next().unwrap();
+                        self.make_token(
+                            TokenType::Or,
+                            String::from(ch) + &String::from(next),
+                            self.line,
+                            None,
+                        )
                     } else {
                         error::KlangError::error(
                             KlangError::ScannerError,
@@ -395,7 +394,6 @@ pub enum TokenType {
     LeftBrace,
     RightBrace,
     Comma,
-    Dot,
     Minus,
     Plus,
     Slash,
@@ -446,7 +444,6 @@ impl fmt::Display for TokenType {
             TokenType::LeftBrace => write!(f, "LeftBrace"),
             TokenType::RightBrace => write!(f, "RightBrace"),
             TokenType::Comma => write!(f, "Comma"),
-            TokenType::Dot => write!(f, "Dot"),
             TokenType::Minus => write!(f, "Minus"),
             TokenType::Plus => write!(f, "Plus"),
             TokenType::Slash => write!(f, "Slash"),
@@ -508,10 +505,22 @@ impl fmt::Display for Value {
                 write!(f, "[");
                 let x = vec.pop();
                 for i in vec {
-                    write!(f, "{i},");
+                    match i {
+                        Value::String {
+                            string,
+                            printables: _,
+                        } => write!(f, "{string}, "),
+                        _ => write!(f, "{i}, "),
+                    };
                 }
                 match x {
-                    Some(x) => write!(f, "{x}"),
+                    Some(x) => match x {
+                        Value::String {
+                            string,
+                            printables: _,
+                        } => write!(f, "{string}"),
+                        _ => write!(f, "{x}"),
+                    },
                     None => Ok(()),
                 };
                 write!(f, "]")

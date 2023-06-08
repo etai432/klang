@@ -318,7 +318,6 @@ pub fn create_file_io_natives() -> Vec<NativeFn> {
 }
 pub fn vector_natives() -> Vec<NativeFn> {
     let mut natives: Vec<NativeFn> = Vec::new();
-
     natives.push(NativeFn {
         name: "get".to_string(),
         args: 2,
@@ -331,6 +330,60 @@ pub fn vector_natives() -> Vec<NativeFn> {
                 }
             },
         ),
+    });
+    natives.push(NativeFn {
+        name: "set".to_string(),
+        args: 3,
+        function: Box::new(|mut args| {
+            if let Value::Number(index) = args.pop().unwrap() {
+                let value = args.pop().unwrap();
+                if let Value::Vec(mut vec) = args.pop().unwrap() {
+                    vec[index as usize] = value;
+                    Some(Value::Vec(vec))
+                } else {
+                    error("expected a (vector, value, index)");
+                    panic!()
+                }
+            } else {
+                error("expected a (vector, value, index)");
+                panic!()
+            }
+        }),
+    });
+    natives.push(NativeFn {
+        name: "remove".to_string(),
+        args: 2,
+        function: Box::new(
+            |mut args| match (args.pop().unwrap(), args.pop().unwrap()) {
+                (Value::Number(index), Value::Vec(mut vec)) => {
+                    vec.remove(index as usize);
+                    Some(Value::Vec(vec))
+                }
+                _ => {
+                    error("expected a (vector, number)");
+                    panic!()
+                }
+            },
+        ),
+    });
+    natives.push(NativeFn {
+        name: "insert".to_string(),
+        args: 3,
+        function: Box::new(|mut args| {
+            if let Value::Number(index) = args.pop().unwrap() {
+                let value = args.pop().unwrap();
+                if let Value::Vec(mut vec) = args.pop().unwrap() {
+                    vec.insert(index as usize, value);
+                    Some(Value::Vec(vec))
+                } else {
+                    error("expected a (vector, value, index)");
+                    panic!()
+                }
+            } else {
+                error("expected a (vector, value, index)");
+                panic!()
+            }
+        }),
     });
 
     natives
