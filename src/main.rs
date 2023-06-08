@@ -47,6 +47,7 @@ fn run_file(path: &str, relfilename: &str) {
     let mut parser = parser::Parser::new(scanner.scan_tokens(), relfilename);
     let ast = parser.parse();
     let chunk = compiler::Chunk::new(compiler::compile(ast));
+    println!("{:?}", chunk.code);
     let mut vm = vm::VM::new(chunk, relfilename);
     vm.run();
 }

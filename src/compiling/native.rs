@@ -23,6 +23,7 @@ pub fn create_natives() -> Vec<NativeFn> {
     natives.extend(random_natives());
     natives.extend(time_natives());
     natives.extend(create_file_io_natives());
+    natives.extend(vector_natives());
     natives.push(NativeFn {
         name: "read".to_string(),
         args: 0,
@@ -300,7 +301,7 @@ pub fn create_file_io_natives() -> Vec<NativeFn> {
             ) = (args.get(0), args.get(1))
             {
                 match write_file(filename, contents) {
-                    Ok(()) => Some(Value::Bool(true)),
+                    Ok(()) => None,
                     Err(err) => {
                         error(format!("Failed to write to file: {}", err).as_str());
                         panic!()
@@ -311,6 +312,25 @@ pub fn create_file_io_natives() -> Vec<NativeFn> {
                 panic!()
             }
         }),
+    });
+
+    natives
+}
+pub fn vector_natives() -> Vec<NativeFn> {
+    let mut natives: Vec<NativeFn> = Vec::new();
+
+    natives.push(NativeFn {
+        name: "get".to_string(),
+        args: 2,
+        function: Box::new(
+            |mut args| match (args.pop().unwrap(), args.pop().unwrap()) {
+                (Value::Number(index), Value::Vec(mut vec)) => Some(vec.remove(index as usize)),
+                _ => {
+                    error("expected a (vector, number)");
+                    panic!()
+                }
+            },
+        ),
     });
 
     natives

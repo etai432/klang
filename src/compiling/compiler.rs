@@ -105,14 +105,12 @@ pub fn compile(stmts: Vec<Stmt>) -> (Vec<OpCode>, Vec<usize>) {
                 let b_vec: Vec<Stmt> = vec![*block];
                 let blok = compile(b_vec);
                 let block_len = blok.0.len() as i32;
-                code.push(OpCode::JumpIf(block_len - 1, true));
+                code.push(OpCode::JumpIf(block_len, true));
                 lines.push(line);
                 dump(&mut code, &mut lines, blok);
                 code.pop();
                 lines.pop();
-                code.pop();
-                lines.pop();
-                code.push(OpCode::Jump(-(block_len + con_len + 1)));
+                code.push(OpCode::Jump(-(block_len + con_len + 2)));
                 lines.push(line);
             }
             Stmt::For {
