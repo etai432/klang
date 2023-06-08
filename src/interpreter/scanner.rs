@@ -129,6 +129,19 @@ impl<'a> Scanner<'a> {
                         self.make_token(TokenType::Less, ch.to_string(), self.line, None)
                     }
                 }
+                '.' => {
+                    if self.is_next('.') {
+                        let next = self.chars.next().unwrap();
+                        self.make_token(
+                            TokenType::Range,
+                            String::from(ch) + &String::from(next),
+                            self.line,
+                            None,
+                        );
+                    } else {
+                        self.make_token(TokenType::Dot, ch.to_string(), self.line, None)
+                    }
+                }
                 '&' => {
                     if self.is_next('&') {
                         let next = self.chars.next().unwrap();
@@ -394,6 +407,7 @@ pub enum TokenType {
     LeftBrace,
     RightBrace,
     Comma,
+    Dot,
     Minus,
     Plus,
     Slash,
@@ -444,6 +458,7 @@ impl fmt::Display for TokenType {
             TokenType::LeftBrace => write!(f, "LeftBrace"),
             TokenType::RightBrace => write!(f, "RightBrace"),
             TokenType::Comma => write!(f, "Comma"),
+            TokenType::Dot => write!(f, "Dot"),
             TokenType::Minus => write!(f, "Minus"),
             TokenType::Plus => write!(f, "Plus"),
             TokenType::Slash => write!(f, "Slash"),
