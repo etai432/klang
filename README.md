@@ -19,9 +19,7 @@ Klang is a dynamic programming language interpreted using Rust.
 - Loops:
 - For loop: `for identifier in iterable { code }`
 - While loop: `while bool { code }`
-- Range:
-- `int..int` (exclusive)
-- `int..int..int3` (exclusive, with step size `int3`)
+- Range: `int..int` (exclusive) `int..int..int3` (exclusive, with step size `int3`)
 - Scoping: Klang uses `{}` for scoping.
 - I/O: Klang uses `print()` for output and `std::read()` for input.
 - klang allows custom format inside strings `"hi {1+2}"` would be `hi 3`, but dont allow recursive formatting (formatting inside formatting).
@@ -35,7 +33,7 @@ Klang is a dynamic programming language interpreted using Rust.
 fn add(int1, int2) {
     return int1 + int2;
 }
-print("3 + 5 = {add(3, 5)}")
+print("3 + 5 = {add(3, 5)}");
 ```
 - klang offers a veriety of native functions, each runs in rust! here are the native functions klang offers:
 - Math Functions: `sin` `cos` `tan` `sqrt` `pow` `ln` `log` `round` `abs` `min` `max` `pi`
