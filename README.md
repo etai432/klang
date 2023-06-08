@@ -18,14 +18,14 @@ Klang is a dynamic programming language interpreted using Rust.
 }`
 - Loops:
 - For loop: `for identifier in iterable { code }`
-- While loop: `while bool { code; }`
+- While loop: `while bool { code }`
 - Range:
 - `int..int` (exclusive)
 - `int..int..int3` (exclusive, with step size `int3`)
 - Scoping: Klang uses `{}` for scoping.
 - I/O: Klang uses `print()` for output and `std::read()` for input.
 - klang allows custom format inside strings `"hi {1+2}"` would be `hi 3`, but dont allow recursive formatting (formatting inside formatting).
-- meaning you can print anything you want using 1 print statement! for example: `print("3 pi is: {3 * std::pi()}")`
+- meaning you can print anything you want using 1 print statement! for example: `print("3 pi is: {3 * std::pi()}");
 - Error handling: Klang does not feature explicit error handling. Errors are handled by the parser, scanner, and compiler, and reported to the developer in the terminal.
 - Functions: All functions in Klang are public.
 - the way you declare a function is: `fn name(arg1, arg2) {`
