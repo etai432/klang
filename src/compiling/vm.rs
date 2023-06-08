@@ -366,6 +366,18 @@ impl<'a> VM<'a> {
         }
         scope.callframe.insert(name, pop);
     }
+    fn set_var_inner(&mut self, name: String) {
+        //sets a variable in the most inner scope, to the top value of the stack
+        let pop = match self.pop() {
+            Some(x) => x,
+            None => Value::None,
+        };
+        let mut scope: &mut Scope = &mut self.global;
+        while scope.inner.is_some() {
+            scope = scope.inner.as_mut().unwrap();
+        }
+        scope.callframe.insert(name, pop);
+    }
     fn create_inner(&mut self) {
         let mut scope: &mut Scope = &mut self.global;
         while scope.inner.is_some() {
@@ -555,7 +567,7 @@ impl<'a> VM<'a> {
                 }
             };
             self.push(pop);
-            self.set_var(i);
+            self.set_var_inner(i);
         }
         let mut b = 0;
         for (i, op) in fun.0.into_iter().enumerate() {
