@@ -42,3 +42,4 @@ print("3 + 5 = {add(3, 5)}")
 - Random Functions: `random` `range` `randbool`
 - Time Functions: `time` `sleep`
 - File I/O Functions: `read_file` `write_file` `read`
+- use them by doing `std::` and add the function name
