@@ -35,4 +35,10 @@ Klang is a dynamic programming language interpreted using Rust.
 fn add(int1, int2) {
     return int1 + int2;
 }
-print("3 + 5 = {add(3, 5)}");
+print("3 + 5 = {add(3, 5)}")
+```
+- klang offers a veriety of native functions, each ran in rust! here are the native functions klang offers:
+- Math Functions: `sin` `cos` `tan` `sqrt` `pow` `ln` `log` `round` `abs` `min` `max` `pi`
+- Random Functions: `random` `range` `randbool`
+- Time Functions: `time` `sleep`
+File I/O Functions: `read_file` `write_file` `read`
