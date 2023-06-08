@@ -1,4 +1,4 @@
-# Klang Language
+# Klang Language- its rust.. but dynamic!
 
 Klang is a dynamic programming language interpreted using Rust.
 
