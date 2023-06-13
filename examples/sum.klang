@@ -1,9 +1,0 @@
-//check the time it takes to calc the sum of 0 to 10000
-let x = std::time();
-let sum = 0;
-let i = 10000;
-while i > 0 {
-    sum = sum + i;
-    i = i - 1;
-}
-print("the sum of 0 to 10000 is {sum} and took {std::time() - x} seconds to calculate");
